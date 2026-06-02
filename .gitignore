@@ -1,0 +1,79 @@
+# Python cache / build artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Environment / local config
+.env
+.env.*
+!.env.example
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Uploads and generated runtime outputs
+uploads/
+runs/**
+visualized/
+
+# Keep the model required by app/main.py
+!runs/
+!runs/detect/
+!runs/detect/wood_defect_yolov8n_grouped-2/
+!runs/detect/wood_defect_yolov8n_grouped-2/weights/
+!runs/detect/wood_defect_yolov8n_grouped-2/weights/best.pt
+
+# Datasets and augmented/generated datasets
+dataset/
+OriginalDataset/
+BrightnessVariation/
+DarkDirectionChange/
+GaussianDirectionChange/
+GaussianTransform/
+LightDirectionChange/
+OriginalDirectionChange/
+PeppercornDirectionChange/
+PeppercornTransform/
+
+# YOLO / ML heavy artifacts
+*.pt
+!runs/detect/wood_defect_yolov8n_grouped-2/weights/best.pt
+*.pth
+*.onnx
+*.engine
+*.tflite
+*.mlmodel
+*.pb
+*.cache
+
+# Local sample images not required by source code
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.webp
+*.gif
+!docs/**/*.jpg
+!docs/**/*.jpeg
+!docs/**/*.png
+!assets/**/*.jpg
+!assets/**/*.jpeg
+!assets/**/*.png
