@@ -5,7 +5,7 @@ val: images/val
 test: images/test
 
 names:
-  0: scratch
-  1: crack
-  2: bubble
-  3: hole
+  0: hole
+  1: bubble
+  2: crack
+  3: scratch

@@ -5,7 +5,7 @@ import cv2
 DATASET_DIR = "dataset"
 SPLIT = "train"
 
-CLASS_NAMES = ["scratch", "crack", "bubble", "hole"]
+CLASS_NAMES = ["hole", "bubble", "crack", "scratch"]
 
 IMAGE_DIR = os.path.join(DATASET_DIR, "images", SPLIT)
 LABEL_DIR = os.path.join(DATASET_DIR, "labels", SPLIT)

@@ -40,7 +40,7 @@ visualized/
 !runs/detect/wood_defect_yolov8n_grouped-2/
 !runs/detect/wood_defect_yolov8n_grouped-2/weights/
 !runs/detect/wood_defect_yolov8n_grouped-2/weights/best.pt
-
+!runs/detect/wood_defect_yolov8s-3
 # Datasets and augmented/generated datasets
 dataset/
 OriginalDataset/
