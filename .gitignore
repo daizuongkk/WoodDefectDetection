@@ -31,7 +31,6 @@ Thumbs.db
 
 # Uploads and generated runtime outputs
 uploads/
-runs/**
 visualized/
 
 # Keep the model required by app/main.py
