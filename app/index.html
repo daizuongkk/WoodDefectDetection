@@ -2,2033 +2,2147 @@
 <html lang="vi">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimberGuard AI - Wood Surface Defect Detection</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- Lucide Icons (CDN) -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <style>
-        :root {
-            --bg-primary: #0b0f19;
-            --bg-secondary: #131d31;
-            --bg-tertiary: #1e293b;
-            --border-color: #2e3c56;
-            
-            --primary: #f59e0b; /* Amber */
-            --primary-hover: #d97706;
-            --primary-glow: rgba(245, 158, 11, 0.15);
-            
-            --success: #10b981; /* Emerald */
-            --success-glow: rgba(16, 185, 129, 0.15);
-            
-            --danger: #ef4444; /* Red */
-            --danger-glow: rgba(239, 68, 68, 0.15);
-            
-            --warning: #f97316; /* Orange */
-            --warning-glow: rgba(249, 115, 22, 0.15);
-            
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --text-dark: #64748b;
-            
-            --font-display: 'Outfit', sans-serif;
-            --font-sans: 'Plus Jakarta Sans', sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
-            
-            --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
-            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: var(--font-sans);
-            background-color: var(--bg-primary);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-        }
-
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--bg-primary);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary);
-        }
-
-        header {
-            background-color: var(--bg-secondary);
-            border-bottom: 1px solid var(--border-color);
-            padding: 16px 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            z-index: 10;
-        }
-
-        .brand-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-icon {
-            color: var(--primary);
-            background: var(--primary-glow);
-            padding: 8px;
-            border-radius: 10px;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        h1 {
-            font-family: var(--font-display);
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            background: linear-gradient(135deg, #ffffff 30%, var(--primary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .header-tagline {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
-        .model-badge {
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid var(--border-color);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-family: var(--font-mono);
-            font-size: 11px;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .model-badge .pulse-dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--success);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--success);
-            animation: pulse 1.8s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.9); opacity: 0.6; }
-            50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 12px var(--success); }
-            100% { transform: scale(0.9); opacity: 0.6; }
-        }
-
-        /* App Container */
-        .app-layout {
-            display: flex;
-            flex: 1;
-            width: 100%;
-            max-width: 1920px;
-            margin: 0 auto;
-            position: relative;
-        }
-
-        /* Left Panel - Control Center */
-        .sidebar {
-            width: 360px;
-            background-color: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-            flex-shrink: 0;
-            overflow-y: auto;
-            max-height: calc(100vh - 73px);
-        }
-
-        .sidebar-section {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .section-title {
-            font-family: var(--font-display);
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.75px;
-            color: var(--text-muted);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .section-title i {
-            color: var(--primary);
-        }
-
-        /* Sliders */
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .control-label {
-            font-size: 13px;
-            font-weight: 500;
-            display: flex;
-            justify-content: space-between;
-            color: var(--text-main);
-        }
-
-        .control-val {
-            font-family: var(--font-mono);
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        .slider-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        input[type="range"] {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 6px;
-            border-radius: 3px;
-            background: var(--bg-tertiary);
-            outline: none;
-            transition: var(--transition-smooth);
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--primary);
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
-            transition: var(--transition-smooth);
-        }
-
-        input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-            background: #ffffff;
-        }
-
-        /* Checkboxes for Classes */
-        .class-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 6px;
-        }
-
-        .class-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            background-color: var(--bg-tertiary);
-            border-radius: 8px;
-            border: 1px solid transparent;
-            cursor: pointer;
-            transition: var(--transition-smooth);
-        }
-
-        .class-item:hover {
-            border-color: rgba(245, 158, 11, 0.2);
-            background-color: rgba(255, 255, 255, 0.02);
-        }
-
-        .class-checkbox-wrap {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .class-item input[type="checkbox"] {
-            accent-color: var(--primary);
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-        }
-
-        .class-name {
-            font-size: 13px;
-            font-weight: 500;
-            text-transform: capitalize;
-        }
-
-        .class-color-badge {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-
-        .badge-hole { background-color: #ef4444; box-shadow: 0 0 6px #ef4444; }
-        .badge-bubble { background-color: #3b82f6; box-shadow: 0 0 6px #3b82f6; }
-        .badge-crack { background-color: #10b981; box-shadow: 0 0 6px #10b981; }
-        .badge-scratch { background-color: #eab308; box-shadow: 0 0 6px #eab308; }
-
-        /* Quick Samples Grid */
-        .samples-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 6px;
-        }
-
-        .sample-card {
-            position: relative;
-            aspect-ratio: 1;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: var(--transition-smooth);
-        }
-
-        .sample-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: var(--transition-smooth);
-        }
-
-        .sample-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
-        }
-
-        .sample-card:hover img {
-            transform: scale(1.1);
-        }
-
-        .sample-label {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(11, 15, 25, 0.8);
-            font-size: 10px;
-            padding: 4px;
-            text-align: center;
-            font-weight: 500;
-            border-top: 1px solid var(--border-color);
-        }
-
-        /* Right Panel - Work Area */
-        .workspace {
-            flex: 1;
-            padding: 32px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-            overflow-y: auto;
-            max-height: calc(100vh - 73px);
-            background: linear-gradient(180deg, #0e1423 0%, var(--bg-primary) 100%);
-        }
-
-        /* Welcome / Empty Placeholder state */
-        .placeholder-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-            padding: 64px 32px;
-            text-align: center;
-        }
-
-        .placeholder-icon-group {
-            position: relative;
-            margin-bottom: 24px;
-        }
-
-        .placeholder-glow {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            background: var(--primary);
-            filter: blur(40px);
-            opacity: 0.15;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1;
-        }
-
-        .placeholder-main-icon {
-            font-size: 64px;
-            color: var(--text-muted);
-            position: relative;
-            z-index: 2;
-        }
-
-        .placeholder-title {
-            font-family: var(--font-display);
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .placeholder-desc {
-            color: var(--text-muted);
-            max-width: 500px;
-            font-size: 15px;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-
-        /* Drag & Drop Upload Zone */
-        .upload-zone {
-            width: 100%;
-            max-width: 650px;
-            border: 2px dashed var(--border-color);
-            background-color: var(--bg-secondary);
-            border-radius: 16px;
-            padding: 48px 32px;
-            text-align: center;
-            cursor: pointer;
-            transition: var(--transition-smooth);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
-            box-shadow: var(--card-shadow);
-        }
-
-        .upload-zone.dragover {
-            border-color: var(--primary);
-            background-color: rgba(245, 158, 11, 0.04);
-            box-shadow: 0 0 20px var(--primary-glow);
-            transform: scale(1.01);
-        }
-
-        .upload-icon {
-            color: var(--primary);
-            background: var(--primary-glow);
-            padding: 16px;
-            border-radius: 50%;
-            border: 1px solid rgba(245, 158, 11, 0.2);
-            transition: var(--transition-smooth);
-        }
-
-        .upload-zone:hover .upload-icon {
-            transform: translateY(-4px);
-            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
-        }
-
-        .upload-text-main {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .upload-text-sub {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        .upload-formats-badge {
-            background-color: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 11px;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        /* Dashboard results panel */
-        .results-container {
-            display: none; /* Shown dynamically */
-            flex-direction: column;
-            gap: 24px;
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Metric Grid */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-        }
-
-        .metric-card {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            box-shadow: var(--card-shadow);
-            transition: var(--transition-smooth);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .metric-card:hover {
-            border-color: rgba(245, 158, 11, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .metric-icon-wrap {
-            padding: 12px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .metric-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .metric-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .metric-value {
-            font-family: var(--font-display);
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .metric-sub {
-            font-size: 10px;
-            color: var(--text-dark);
-            font-family: var(--font-mono);
-        }
-
-        /* Verdict Card States */
-        .card-verdict.pass {
-            border-color: rgba(16, 185, 129, 0.3);
-            background: linear-gradient(135deg, var(--bg-secondary) 70%, rgba(16, 185, 129, 0.15) 100%);
-        }
-        .card-verdict.pass .metric-icon-wrap {
-            background: var(--success-glow);
-            color: var(--success);
-        }
-        .card-verdict.pass .metric-value {
-            color: var(--success);
-            text-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
-        }
-
-        .card-verdict.ng-minor {
-            border-color: rgba(249, 115, 22, 0.3);
-            background: linear-gradient(135deg, var(--bg-secondary) 70%, rgba(249, 115, 22, 0.15) 100%);
-        }
-        .card-verdict.ng-minor .metric-icon-wrap {
-            background: var(--warning-glow);
-            color: var(--warning);
-        }
-        .card-verdict.ng-minor .metric-value {
-            color: var(--warning);
-            text-shadow: 0 0 10px rgba(249, 115, 22, 0.2);
-        }
-
-        .card-verdict.ng-serious {
-            border-color: rgba(239, 68, 68, 0.3);
-            background: linear-gradient(135deg, var(--bg-secondary) 70%, rgba(239, 68, 68, 0.15) 100%);
-        }
-        .card-verdict.ng-serious .metric-icon-wrap {
-            background: var(--danger-glow);
-            color: var(--danger);
-        }
-        .card-verdict.ng-serious .metric-value {
-            color: var(--danger);
-            text-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
-        }
-
-        /* Metric Counts, Speed, Max Conf icons */
-        .card-defects .metric-icon-wrap { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-        .card-speed .metric-icon-wrap { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
-        .card-conf .metric-icon-wrap { background: var(--primary-glow); color: var(--primary); }
-
-        /* Main Workspace Content (Visualizer & Info Panel) */
-        .workspace-grid {
-            display: grid;
-            grid-template-columns: 1.5fr 1fr;
-            gap: 24px;
-            align-items: start;
-        }
-
-        /* Image Visualizer Card */
-        .visualizer-card {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: var(--card-shadow);
-        }
-
-        .visualizer-header {
-            background-color: rgba(30, 41, 59, 0.4);
-            border-bottom: 1px solid var(--border-color);
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .visualizer-title {
-            font-family: var(--font-display);
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-main);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Visualizer Tabs */
-        .tab-group {
-            display: flex;
-            background-color: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 3px;
-        }
-
-        .tab-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            padding: 6px 12px;
-            font-size: 12px;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: var(--transition-smooth);
-        }
-
-        .tab-btn.active {
-            background-color: var(--bg-tertiary);
-            color: var(--primary);
-            border: 1px solid rgba(245, 158, 11, 0.2);
-        }
-
-        /* Viewer Display Area */
-        .viewer-display {
-            position: relative;
-            width: 100%;
-            background-color: #060911;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 400px;
-            max-height: 600px;
-            overflow: hidden;
-            padding: 16px;
-        }
-
-        .viewer-image-wrapper {
-            position: relative;
-            max-width: 100%;
-            max-height: 100%;
-            display: inline-block;
-        }
-
-        /* Images inside viewer */
-        .viewer-img {
-            display: block;
-            max-width: 100%;
-            max-height: 550px;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            object-fit: contain;
-        }
-
-        #canvasOverlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: auto; /* Allow mouse interactions for tooltips */
-            cursor: crosshair;
-        }
-
-        /* Tooltip details overlay */
-        .canvas-tooltip {
-            position: absolute;
-            background: rgba(11, 15, 25, 0.95);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 12px;
-            pointer-events: none;
-            display: none;
-            z-index: 100;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-
-        .tooltip-row {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 4px;
-        }
-        .tooltip-row:last-child { margin-bottom: 0; }
-        .tooltip-label { color: var(--text-muted); }
-        .tooltip-value { font-weight: 600; font-family: var(--font-mono); }
-
-        /* Right Section - Analytics and Details */
-        .details-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        /* Analytics / Chart Card */
-        .analytics-card {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: var(--card-shadow);
-        }
-
-        .card-header-inner {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .card-title-inner {
-            font-family: var(--font-display);
-            font-size: 14px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .chart-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .chart-row {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .chart-label-wrap {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .chart-label-class {
-            text-transform: capitalize;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .chart-class-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-
-        .chart-label-count {
-            font-family: var(--font-mono);
-            font-weight: 600;
-            color: var(--primary);
-        }
-
-        .chart-bar-bg {
-            height: 8px;
-            background-color: var(--bg-tertiary);
-            border-radius: 4px;
-            overflow: hidden;
-            width: 100%;
-        }
-
-        .chart-bar-fill {
-            height: 100%;
-            border-radius: 4px;
-            width: 0%; /* Animated on load */
-            transition: width 0.8s cubic-bezier(0.1, 0.8, 0.3, 1);
-        }
-
-        /* Table Card */
-        .table-card {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: var(--card-shadow);
-        }
-
-        .table-container {
-            max-height: 350px;
-            overflow-y: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        thead {
-            position: sticky;
-            top: 0;
-            background-color: var(--bg-tertiary);
-            z-index: 2;
-        }
-
-        th {
-            font-weight: 600;
-            color: var(--text-muted);
-            text-align: left;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border-color);
-            font-family: var(--font-display);
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        td {
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-main);
-            vertical-align: middle;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr.table-row-defect {
-            cursor: pointer;
-            transition: var(--transition-smooth);
-        }
-
-        tr.table-row-defect:hover {
-            background-color: rgba(255, 255, 255, 0.03);
-        }
-
-        tr.table-row-defect.highlighted {
-            background-color: var(--primary-glow) !important;
-            border-left: 3px solid var(--primary);
-        }
-
-        .td-id {
-            font-family: var(--font-mono);
-            color: var(--text-muted);
-        }
-
-        .td-class {
-            font-weight: 600;
-            text-transform: capitalize;
-        }
-
-        .td-conf {
-            font-family: var(--font-mono);
-            font-weight: 500;
-        }
-
-        .conf-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .td-bbox {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-
-        .no-data {
-            padding: 32px;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        /* Action Buttons */
-        .action-row {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 10px 20px;
-            font-family: var(--font-sans);
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            border: 1px solid transparent;
-            transition: var(--transition-smooth);
-        }
-
-        .btn-primary {
-            background-color: var(--primary);
-            color: #0b0f19;
-            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-        }
-
-        .btn-secondary {
-            background-color: transparent;
-            border-color: var(--border-color);
-            color: var(--text-main);
-        }
-
-        .btn-secondary:hover {
-            background-color: var(--bg-tertiary);
-            border-color: var(--text-muted);
-        }
-
-        /* History panel */
-        .history-card {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: var(--card-shadow);
-        }
-
-        .history-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 12px;
-            max-height: 250px;
-            overflow-y: auto;
-        }
-
-        .history-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 12px;
-            background-color: var(--bg-tertiary);
-            border-radius: 8px;
-            border: 1px solid transparent;
-            cursor: pointer;
-            transition: var(--transition-smooth);
-        }
-
-        .history-item:hover {
-            border-color: rgba(245, 158, 11, 0.2);
-            background-color: rgba(255, 255, 255, 0.02);
-        }
-
-        .history-item-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .history-thumbnail {
-            width: 40px;
-            height: 40px;
-            border-radius: 6px;
-            object-fit: cover;
-            border: 1px solid var(--border-color);
-        }
-
-        .history-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .history-name {
-            font-size: 12px;
-            font-weight: 600;
-            max-width: 150px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .history-time {
-            font-size: 10px;
-            color: var(--text-muted);
-        }
-
-        .history-verdict-badge {
-            font-size: 10px;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 4px;
-            text-transform: uppercase;
-        }
-
-        .verdict-pass {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--success);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .verdict-ng {
-            background: rgba(239, 68, 68, 0.15);
-            color: var(--danger);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        /* Loading Spinner Overlays */
-        .loading-overlay {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(11, 15, 25, 0.85);
-            backdrop-filter: blur(4px);
-            z-index: 100;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 20px;
-            border-radius: 16px;
-        }
-
-        .spinner-outer {
-            width: 60px;
-            height: 60px;
-            border: 4px solid var(--bg-tertiary);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            position: relative;
-        }
-
-        .spinner-inner {
-            position: absolute;
-            top: 6px;
-            left: 6px;
-            right: 6px;
-            bottom: 6px;
-            border: 4px solid transparent;
-            border-top-color: var(--success);
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite reverse;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            font-family: var(--font-display);
-            font-weight: 600;
-            color: var(--text-main);
-            letter-spacing: 0.5px;
-            font-size: 15px;
-            animation: pulse-text 1.5s ease-in-out infinite;
-        }
-
-        @keyframes pulse-text {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
-        }
-
-        /* Toast Notifications */
-        .toast-container {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .toast {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-left: 4px solid var(--primary);
-            border-radius: 8px;
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-            color: var(--text-main);
-            font-size: 13px;
-            min-width: 250px;
-            max-width: 400px;
-            transform: translateX(120%);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        .toast-success { border-left-color: var(--success); }
-        .toast-error { border-left-color: var(--danger); }
-        
-        .toast-icon { display: flex; align-items: center; }
-        .toast-icon-success { color: var(--success); }
-        .toast-icon-error { color: var(--danger); }
-
-        /* Scanning overlay effect */
-        .scanner-line {
-            display: none;
-            position: absolute;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(to bottom, transparent, var(--primary), transparent);
-            box-shadow: 0 0 15px var(--primary);
-            z-index: 10;
-            animation: scan 2s linear infinite;
-        }
-
-        @keyframes scan {
-            0% { top: 0%; }
-            50% { top: 100%; }
-            100% { top: 0%; }
-        }
-
-        /* Footer */
-        footer {
-            background-color: var(--bg-primary);
-            border-top: 1px solid var(--border-color);
-            padding: 16px;
-            text-align: center;
-            font-size: 12px;
-            color: var(--text-dark);
-            margin-top: auto;
-        }
-
-        /* Responsiveness */
-        @media (max-width: 1024px) {
-            .app-layout {
-                flex-direction: column;
-            }
-            .sidebar {
-                width: 100%;
-                max-height: none;
-                border-right: none;
-                border-bottom: 1px solid var(--border-color);
-            }
-            .workspace {
-                padding: 16px;
-                max-height: none;
-            }
-            .workspace-grid {
-                grid-template-columns: 1fr;
-            }
-            .metrics-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 640px) {
-            .metrics-grid {
-                grid-template-columns: 1fr;
-            }
-            header {
-                padding: 12px 16px;
-            }
-        }
-    </style>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>TimberGuard AI - Wood Surface Defect Detection</title>
+
+	<!-- Google Fonts -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link
+		href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+		rel="stylesheet">
+
+	<!-- Lucide Icons (CDN) -->
+	<script src="https://unpkg.com/lucide@latest"></script>
+
+	<style>
+		:root {
+			--bg-primary: #0b0f19;
+			--bg-secondary: #131d31;
+			--bg-tertiary: #1e293b;
+			--border-color: #2e3c56;
+
+			--primary: #f59e0b;
+			/* Amber */
+			--primary-hover: #d97706;
+			--primary-glow: rgba(245, 158, 11, 0.15);
+
+			--success: #10b981;
+			/* Emerald */
+			--success-glow: rgba(16, 185, 129, 0.15);
+
+			--danger: #ef4444;
+			/* Red */
+			--danger-glow: rgba(239, 68, 68, 0.15);
+
+			--warning: #f97316;
+			/* Orange */
+			--warning-glow: rgba(249, 115, 22, 0.15);
+
+			--text-main: #f8fafc;
+			--text-muted: #94a3b8;
+			--text-dark: #64748b;
+
+			--font-display: 'Outfit', sans-serif;
+			--font-sans: 'Plus Jakarta Sans', sans-serif;
+			--font-mono: 'JetBrains Mono', monospace;
+
+			--card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+			--transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		}
+
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			font-family: var(--font-sans);
+			background-color: var(--bg-primary);
+			color: var(--text-main);
+			min-height: 100vh;
+			display: flex;
+			flex-direction: column;
+			overflow-x: hidden;
+		}
+
+		/* Scrollbar styling */
+		::-webkit-scrollbar {
+			width: 8px;
+			height: 8px;
+		}
+
+		::-webkit-scrollbar-track {
+			background: var(--bg-primary);
+		}
+
+		::-webkit-scrollbar-thumb {
+			background: var(--border-color);
+			border-radius: 4px;
+		}
+
+		::-webkit-scrollbar-thumb:hover {
+			background: var(--primary);
+		}
+
+		header {
+			background-color: var(--bg-secondary);
+			border-bottom: 1px solid var(--border-color);
+			padding: 16px 32px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+			z-index: 10;
+		}
+
+		.brand-container {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.logo-icon {
+			color: var(--primary);
+			background: var(--primary-glow);
+			padding: 8px;
+			border-radius: 10px;
+			border: 1px solid rgba(245, 158, 11, 0.3);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		h1 {
+			font-family: var(--font-display);
+			font-size: 22px;
+			font-weight: 700;
+			letter-spacing: 0.5px;
+			background: linear-gradient(135deg, #ffffff 30%, var(--primary) 100%);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+		}
+
+		.header-tagline {
+			font-size: 13px;
+			color: var(--text-muted);
+			margin-top: 2px;
+		}
+
+		.model-badge {
+			background: rgba(30, 41, 59, 0.8);
+			border: 1px solid var(--border-color);
+			padding: 6px 12px;
+			border-radius: 20px;
+			font-family: var(--font-mono);
+			font-size: 11px;
+			color: var(--primary);
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.model-badge .pulse-dot {
+			width: 8px;
+			height: 8px;
+			background-color: var(--success);
+			border-radius: 50%;
+			box-shadow: 0 0 8px var(--success);
+			animation: pulse 1.8s infinite;
+		}
+
+		@keyframes pulse {
+			0% {
+				transform: scale(0.9);
+				opacity: 0.6;
+			}
+
+			50% {
+				transform: scale(1.1);
+				opacity: 1;
+				box-shadow: 0 0 12px var(--success);
+			}
+
+			100% {
+				transform: scale(0.9);
+				opacity: 0.6;
+			}
+		}
+
+		/* App Container */
+		.app-layout {
+			display: flex;
+			flex: 1;
+			width: 100%;
+			max-width: 1920px;
+			margin: 0 auto;
+			position: relative;
+		}
+
+		/* Left Panel - Control Center */
+		.sidebar {
+			width: 360px;
+			background-color: var(--bg-secondary);
+			border-right: 1px solid var(--border-color);
+			padding: 24px;
+			display: flex;
+			flex-direction: column;
+			gap: 24px;
+			flex-shrink: 0;
+			overflow-y: auto;
+			max-height: calc(100vh - 73px);
+		}
+
+		.sidebar-section {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+		}
+
+		.section-title {
+			font-family: var(--font-display);
+			font-size: 14px;
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.75px;
+			color: var(--text-muted);
+			border-bottom: 1px solid var(--border-color);
+			padding-bottom: 8px;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.section-title i {
+			color: var(--primary);
+		}
+
+		/* Sliders */
+		.control-group {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			margin-bottom: 12px;
+		}
+
+		.control-label {
+			font-size: 13px;
+			font-weight: 500;
+			display: flex;
+			justify-content: space-between;
+			color: var(--text-main);
+		}
+
+		.control-val {
+			font-family: var(--font-mono);
+			color: var(--primary);
+			font-weight: 600;
+		}
+
+		.slider-wrapper {
+			position: relative;
+			display: flex;
+			align-items: center;
+		}
+
+		input[type="range"] {
+			-webkit-appearance: none;
+			width: 100%;
+			height: 6px;
+			border-radius: 3px;
+			background: var(--bg-tertiary);
+			outline: none;
+			transition: var(--transition-smooth);
+		}
+
+		input[type="range"]::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			appearance: none;
+			width: 16px;
+			height: 16px;
+			border-radius: 50%;
+			background: var(--primary);
+			cursor: pointer;
+			box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+			transition: var(--transition-smooth);
+		}
+
+		input[type="range"]::-webkit-slider-thumb:hover {
+			transform: scale(1.2);
+			background: #ffffff;
+		}
+
+		/* Checkboxes for Classes */
+		.class-list {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			margin-top: 6px;
+		}
+
+		.class-item {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 8px 12px;
+			background-color: var(--bg-tertiary);
+			border-radius: 8px;
+			border: 1px solid transparent;
+			cursor: pointer;
+			transition: var(--transition-smooth);
+		}
+
+		.class-item:hover {
+			border-color: rgba(245, 158, 11, 0.2);
+			background-color: rgba(255, 255, 255, 0.02);
+		}
+
+		.class-checkbox-wrap {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.class-item input[type="checkbox"] {
+			accent-color: var(--primary);
+			width: 16px;
+			height: 16px;
+			cursor: pointer;
+		}
+
+		.class-name {
+			font-size: 13px;
+			font-weight: 500;
+			text-transform: capitalize;
+		}
+
+		.class-color-badge {
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+		}
+
+		.badge-hole {
+			background-color: #ef4444;
+			box-shadow: 0 0 6px #ef4444;
+		}
+
+		.badge-bubble {
+			background-color: #3b82f6;
+			box-shadow: 0 0 6px #3b82f6;
+		}
+
+		.badge-crack {
+			background-color: #10b981;
+			box-shadow: 0 0 6px #10b981;
+		}
+
+		.badge-scratch {
+			background-color: #eab308;
+			box-shadow: 0 0 6px #eab308;
+		}
+
+		/* Quick Samples Grid */
+		.samples-grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 10px;
+			margin-top: 6px;
+		}
+
+		.sample-card {
+			position: relative;
+			aspect-ratio: 1;
+			border-radius: 8px;
+			overflow: hidden;
+			border: 1px solid var(--border-color);
+			cursor: pointer;
+			transition: var(--transition-smooth);
+		}
+
+		.sample-card img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			transition: var(--transition-smooth);
+		}
+
+		.sample-card:hover {
+			border-color: var(--primary);
+			transform: translateY(-2px);
+			box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+		}
+
+		.sample-card:hover img {
+			transform: scale(1.1);
+		}
+
+		.sample-label {
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			background: rgba(11, 15, 25, 0.8);
+			font-size: 10px;
+			padding: 4px;
+			text-align: center;
+			font-weight: 500;
+			border-top: 1px solid var(--border-color);
+		}
+
+		/* Right Panel - Work Area */
+		.workspace {
+			flex: 1;
+			padding: 32px;
+			display: flex;
+			flex-direction: column;
+			gap: 24px;
+			overflow-y: auto;
+			max-height: calc(100vh - 73px);
+			background: linear-gradient(180deg, #0e1423 0%, var(--bg-primary) 100%);
+		}
+
+		/* Welcome / Empty Placeholder state */
+		.placeholder-container {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			flex: 1;
+			padding: 64px 32px;
+			text-align: center;
+		}
+
+		.placeholder-icon-group {
+			position: relative;
+			margin-bottom: 24px;
+		}
+
+		.placeholder-glow {
+			position: absolute;
+			width: 100px;
+			height: 100px;
+			background: var(--primary);
+			filter: blur(40px);
+			opacity: 0.15;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			z-index: 1;
+		}
+
+		.placeholder-main-icon {
+			font-size: 64px;
+			color: var(--text-muted);
+			position: relative;
+			z-index: 2;
+		}
+
+		.placeholder-title {
+			font-family: var(--font-display);
+			font-size: 24px;
+			font-weight: 700;
+			margin-bottom: 12px;
+		}
+
+		.placeholder-desc {
+			color: var(--text-muted);
+			max-width: 500px;
+			font-size: 15px;
+			line-height: 1.6;
+			margin-bottom: 30px;
+		}
+
+		/* Drag & Drop Upload Zone */
+		.upload-zone {
+			width: 100%;
+			max-width: 650px;
+			border: 2px dashed var(--border-color);
+			background-color: var(--bg-secondary);
+			border-radius: 16px;
+			padding: 48px 32px;
+			text-align: center;
+			cursor: pointer;
+			transition: var(--transition-smooth);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 16px;
+			box-shadow: var(--card-shadow);
+		}
+
+		.upload-zone.dragover {
+			border-color: var(--primary);
+			background-color: rgba(245, 158, 11, 0.04);
+			box-shadow: 0 0 20px var(--primary-glow);
+			transform: scale(1.01);
+		}
+
+		.upload-icon {
+			color: var(--primary);
+			background: var(--primary-glow);
+			padding: 16px;
+			border-radius: 50%;
+			border: 1px solid rgba(245, 158, 11, 0.2);
+			transition: var(--transition-smooth);
+		}
+
+		.upload-zone:hover .upload-icon {
+			transform: translateY(-4px);
+			box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+		}
+
+		.upload-text-main {
+			font-size: 16px;
+			font-weight: 600;
+			color: var(--text-main);
+		}
+
+		.upload-text-sub {
+			font-size: 13px;
+			color: var(--text-muted);
+		}
+
+		.upload-formats-badge {
+			background-color: var(--bg-tertiary);
+			border: 1px solid var(--border-color);
+			padding: 4px 12px;
+			border-radius: 12px;
+			font-size: 11px;
+			color: var(--text-muted);
+			font-weight: 500;
+		}
+
+		#fileInput {
+			display: none;
+		}
+
+		/* Dashboard results panel */
+		.results-container {
+			display: none;
+			/* Shown dynamically */
+			flex-direction: column;
+			gap: 24px;
+			animation: fadeIn 0.4s ease-out;
+		}
+
+		@keyframes fadeIn {
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		/* Metric Grid */
+		.metrics-grid {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			gap: 20px;
+		}
+
+		.metric-card {
+			background-color: var(--bg-secondary);
+			border: 1px solid var(--border-color);
+			border-radius: 14px;
+			padding: 20px;
+			display: flex;
+			align-items: center;
+			gap: 16px;
+			box-shadow: var(--card-shadow);
+			transition: var(--transition-smooth);
+			position: relative;
+			overflow: hidden;
+		}
+
+		.metric-card:hover {
+			border-color: rgba(245, 158, 11, 0.2);
+			transform: translateY(-2px);
+		}
+
+		.metric-icon-wrap {
+			padding: 12px;
+			border-radius: 12px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.metric-info {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+
+		.metric-title {
+			font-size: 12px;
+			font-weight: 600;
+			color: var(--text-muted);
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+		}
+
+		.metric-value {
+			font-family: var(--font-display);
+			font-size: 20px;
+			font-weight: 700;
+		}
+
+		.metric-sub {
+			font-size: 10px;
+			color: var(--text-dark);
+			font-family: var(--font-mono);
+		}
+
+		/* Verdict Card States */
+		.card-verdict.pass {
+			border-color: rgba(16, 185, 129, 0.3);
+			background: linear-gradient(135deg, var(--bg-secondary) 70%, rgba(16, 185, 129, 0.15) 100%);
+		}
+
+		.card-verdict.pass .metric-icon-wrap {
+			background: var(--success-glow);
+			color: var(--success);
+		}
+
+		.card-verdict.pass .metric-value {
+			color: var(--success);
+			text-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+		}
+
+		.card-verdict.ng-minor {
+			border-color: rgba(249, 115, 22, 0.3);
+			background: linear-gradient(135deg, var(--bg-secondary) 70%, rgba(249, 115, 22, 0.15) 100%);
+		}
+
+		.card-verdict.ng-minor .metric-icon-wrap {
+			background: var(--warning-glow);
+			color: var(--warning);
+		}
+
+		.card-verdict.ng-minor .metric-value {
+			color: var(--warning);
+			text-shadow: 0 0 10px rgba(249, 115, 22, 0.2);
+		}
+
+		.card-verdict.ng-serious {
+			border-color: rgba(239, 68, 68, 0.3);
+			background: linear-gradient(135deg, var(--bg-secondary) 70%, rgba(239, 68, 68, 0.15) 100%);
+		}
+
+		.card-verdict.ng-serious .metric-icon-wrap {
+			background: var(--danger-glow);
+			color: var(--danger);
+		}
+
+		.card-verdict.ng-serious .metric-value {
+			color: var(--danger);
+			text-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+		}
+
+		/* Metric Counts, Speed, Max Conf icons */
+		.card-defects .metric-icon-wrap {
+			background: rgba(59, 130, 246, 0.15);
+			color: #3b82f6;
+		}
+
+		.card-speed .metric-icon-wrap {
+			background: rgba(139, 92, 246, 0.15);
+			color: #8b5cf6;
+		}
+
+		.card-conf .metric-icon-wrap {
+			background: var(--primary-glow);
+			color: var(--primary);
+		}
+
+		/* Main Workspace Content (Visualizer & Info Panel) */
+		.workspace-grid {
+			display: grid;
+			grid-template-columns: 1.5fr 1fr;
+			gap: 24px;
+			align-items: start;
+		}
+
+		/* Image Visualizer Card */
+		.visualizer-card {
+			background-color: var(--bg-secondary);
+			border: 1px solid var(--border-color);
+			border-radius: 16px;
+			overflow: hidden;
+			box-shadow: var(--card-shadow);
+		}
+
+		.visualizer-header {
+			background-color: rgba(30, 41, 59, 0.4);
+			border-bottom: 1px solid var(--border-color);
+			padding: 12px 20px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.visualizer-title {
+			font-family: var(--font-display);
+			font-size: 14px;
+			font-weight: 600;
+			color: var(--text-main);
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		/* Visualizer Tabs */
+		.tab-group {
+			display: flex;
+			background-color: var(--bg-primary);
+			border: 1px solid var(--border-color);
+			border-radius: 8px;
+			padding: 3px;
+		}
+
+		.tab-btn {
+			background: none;
+			border: none;
+			color: var(--text-muted);
+			padding: 6px 12px;
+			font-size: 12px;
+			font-weight: 600;
+			border-radius: 6px;
+			cursor: pointer;
+			transition: var(--transition-smooth);
+		}
+
+		.tab-btn.active {
+			background-color: var(--bg-tertiary);
+			color: var(--primary);
+			border: 1px solid rgba(245, 158, 11, 0.2);
+		}
+
+		/* Viewer Display Area */
+		.viewer-display {
+			position: relative;
+			width: 100%;
+			background-color: #060911;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			min-height: 400px;
+			max-height: 600px;
+			overflow: hidden;
+			padding: 16px;
+		}
+
+		.viewer-image-wrapper {
+			position: relative;
+			max-width: 100%;
+			max-height: 100%;
+			display: inline-block;
+		}
+
+		/* Images inside viewer */
+		.viewer-img {
+			display: block;
+			max-width: 100%;
+			max-height: 550px;
+			border-radius: 8px;
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+			object-fit: contain;
+		}
+
+		#canvasOverlay {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			pointer-events: auto;
+			/* Allow mouse interactions for tooltips */
+			cursor: crosshair;
+		}
+
+		/* Tooltip details overlay */
+		.canvas-tooltip {
+			position: absolute;
+			background: rgba(11, 15, 25, 0.95);
+			border: 1px solid var(--border-color);
+			border-radius: 8px;
+			padding: 10px 14px;
+			font-size: 12px;
+			pointer-events: none;
+			display: none;
+			z-index: 100;
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+		}
+
+		.tooltip-row {
+			display: flex;
+			justify-content: space-between;
+			gap: 12px;
+			margin-bottom: 4px;
+		}
+
+		.tooltip-row:last-child {
+			margin-bottom: 0;
+		}
+
+		.tooltip-label {
+			color: var(--text-muted);
+		}
+
+		.tooltip-value {
+			font-weight: 600;
+			font-family: var(--font-mono);
+		}
+
+		/* Right Section - Analytics and Details */
+		.details-panel {
+			display: flex;
+			flex-direction: column;
+			gap: 24px;
+		}
+
+		/* Analytics / Chart Card */
+		.analytics-card {
+			background-color: var(--bg-secondary);
+			border: 1px solid var(--border-color);
+			border-radius: 16px;
+			padding: 20px;
+			box-shadow: var(--card-shadow);
+		}
+
+		.card-header-inner {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 16px;
+		}
+
+		.card-title-inner {
+			font-family: var(--font-display);
+			font-size: 14px;
+			font-weight: 600;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.chart-list {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+		}
+
+		.chart-row {
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+		}
+
+		.chart-label-wrap {
+			display: flex;
+			justify-content: space-between;
+			font-size: 12px;
+			font-weight: 500;
+		}
+
+		.chart-label-class {
+			text-transform: capitalize;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.chart-class-dot {
+			width: 8px;
+			height: 8px;
+			border-radius: 50%;
+		}
+
+		.chart-label-count {
+			font-family: var(--font-mono);
+			font-weight: 600;
+			color: var(--primary);
+		}
+
+		.chart-bar-bg {
+			height: 8px;
+			background-color: var(--bg-tertiary);
+			border-radius: 4px;
+			overflow: hidden;
+			width: 100%;
+		}
+
+		.chart-bar-fill {
+			height: 100%;
+			border-radius: 4px;
+			width: 0%;
+			/* Animated on load */
+			transition: width 0.8s cubic-bezier(0.1, 0.8, 0.3, 1);
+		}
+
+		/* Table Card */
+		.table-card {
+			background-color: var(--bg-secondary);
+			border: 1px solid var(--border-color);
+			border-radius: 16px;
+			overflow: hidden;
+			box-shadow: var(--card-shadow);
+		}
+
+		.table-container {
+			max-height: 350px;
+			overflow-y: auto;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			font-size: 13px;
+		}
+
+		thead {
+			position: sticky;
+			top: 0;
+			background-color: var(--bg-tertiary);
+			z-index: 2;
+		}
+
+		th {
+			font-weight: 600;
+			color: var(--text-muted);
+			text-align: left;
+			padding: 12px 16px;
+			border-bottom: 1px solid var(--border-color);
+			font-family: var(--font-display);
+			font-size: 12px;
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+		}
+
+		td {
+			padding: 12px 16px;
+			border-bottom: 1px solid var(--border-color);
+			color: var(--text-main);
+			vertical-align: middle;
+		}
+
+		tr:last-child td {
+			border-bottom: none;
+		}
+
+		tr.table-row-defect {
+			cursor: pointer;
+			transition: var(--transition-smooth);
+		}
+
+		tr.table-row-defect:hover {
+			background-color: rgba(255, 255, 255, 0.03);
+		}
+
+		tr.table-row-defect.highlighted {
+			background-color: var(--primary-glow) !important;
+			border-left: 3px solid var(--primary);
+		}
+
+		.td-id {
+			font-family: var(--font-mono);
+			color: var(--text-muted);
+		}
+
+		.td-class {
+			font-weight: 600;
+			text-transform: capitalize;
+		}
+
+		.td-conf {
+			font-family: var(--font-mono);
+			font-weight: 500;
+		}
+
+		.conf-badge {
+			display: inline-block;
+			padding: 2px 8px;
+			border-radius: 4px;
+			font-size: 11px;
+			font-weight: 600;
+		}
+
+		.td-bbox {
+			font-family: var(--font-mono);
+			font-size: 11px;
+			color: var(--text-muted);
+		}
+
+		.no-data {
+			padding: 32px;
+			text-align: center;
+			color: var(--text-muted);
+			font-size: 14px;
+		}
+
+		/* Action Buttons */
+		.action-row {
+			display: flex;
+			gap: 12px;
+			margin-top: 16px;
+		}
+
+		.btn {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+			padding: 10px 20px;
+			font-family: var(--font-sans);
+			font-size: 14px;
+			font-weight: 600;
+			border-radius: 8px;
+			cursor: pointer;
+			border: 1px solid transparent;
+			transition: var(--transition-smooth);
+		}
+
+		.btn-primary {
+			background-color: var(--primary);
+			color: #0b0f19;
+			box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+		}
+
+		.btn-primary:hover {
+			background-color: var(--primary-hover);
+			transform: translateY(-1px);
+			box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+		}
+
+		.btn-secondary {
+			background-color: transparent;
+			border-color: var(--border-color);
+			color: var(--text-main);
+		}
+
+		.btn-secondary:hover {
+			background-color: var(--bg-tertiary);
+			border-color: var(--text-muted);
+		}
+
+		/* History panel */
+		.history-card {
+			background-color: var(--bg-secondary);
+			border: 1px solid var(--border-color);
+			border-radius: 16px;
+			padding: 20px;
+			box-shadow: var(--card-shadow);
+		}
+
+		.history-list {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			margin-top: 12px;
+			max-height: 250px;
+			overflow-y: auto;
+		}
+
+		.history-item {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 10px 12px;
+			background-color: var(--bg-tertiary);
+			border-radius: 8px;
+			border: 1px solid transparent;
+			cursor: pointer;
+			transition: var(--transition-smooth);
+		}
+
+		.history-item:hover {
+			border-color: rgba(245, 158, 11, 0.2);
+			background-color: rgba(255, 255, 255, 0.02);
+		}
+
+		.history-item-left {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.history-thumbnail {
+			width: 40px;
+			height: 40px;
+			border-radius: 6px;
+			object-fit: cover;
+			border: 1px solid var(--border-color);
+		}
+
+		.history-info {
+			display: flex;
+			flex-direction: column;
+			gap: 2px;
+		}
+
+		.history-name {
+			font-size: 12px;
+			font-weight: 600;
+			max-width: 150px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.history-time {
+			font-size: 10px;
+			color: var(--text-muted);
+		}
+
+		.history-verdict-badge {
+			font-size: 10px;
+			font-weight: 700;
+			padding: 2px 6px;
+			border-radius: 4px;
+			text-transform: uppercase;
+		}
+
+		.verdict-pass {
+			background: rgba(16, 185, 129, 0.15);
+			color: var(--success);
+			border: 1px solid rgba(16, 185, 129, 0.3);
+		}
+
+		.verdict-ng {
+			background: rgba(239, 68, 68, 0.15);
+			color: var(--danger);
+			border: 1px solid rgba(239, 68, 68, 0.3);
+		}
+
+		/* Loading Spinner Overlays */
+		.loading-overlay {
+			display: none;
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(11, 15, 25, 0.85);
+			backdrop-filter: blur(4px);
+			z-index: 100;
+			align-items: center;
+			justify-content: center;
+			flex-direction: column;
+			gap: 20px;
+			border-radius: 16px;
+		}
+
+		.spinner-outer {
+			width: 60px;
+			height: 60px;
+			border: 4px solid var(--bg-tertiary);
+			border-top-color: var(--primary);
+			border-radius: 50%;
+			animation: spin 1s linear infinite;
+			position: relative;
+		}
+
+		.spinner-inner {
+			position: absolute;
+			top: 6px;
+			left: 6px;
+			right: 6px;
+			bottom: 6px;
+			border: 4px solid transparent;
+			border-top-color: var(--success);
+			border-radius: 50%;
+			animation: spin 0.6s linear infinite reverse;
+		}
+
+		@keyframes spin {
+			to {
+				transform: rotate(360deg);
+			}
+		}
+
+		.loading-text {
+			font-family: var(--font-display);
+			font-weight: 600;
+			color: var(--text-main);
+			letter-spacing: 0.5px;
+			font-size: 15px;
+			animation: pulse-text 1.5s ease-in-out infinite;
+		}
+
+		@keyframes pulse-text {
+
+			0%,
+			100% {
+				opacity: 0.6;
+			}
+
+			50% {
+				opacity: 1;
+			}
+		}
+
+		/* Toast Notifications */
+		.toast-container {
+			position: fixed;
+			bottom: 24px;
+			right: 24px;
+			z-index: 1000;
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+		}
+
+		.toast {
+			background-color: var(--bg-secondary);
+			border: 1px solid var(--border-color);
+			border-left: 4px solid var(--primary);
+			border-radius: 8px;
+			padding: 14px 20px;
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+			color: var(--text-main);
+			font-size: 13px;
+			min-width: 250px;
+			max-width: 400px;
+			transform: translateX(120%);
+			transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+		}
+
+		.toast.show {
+			transform: translateX(0);
+		}
+
+		.toast-success {
+			border-left-color: var(--success);
+		}
+
+		.toast-error {
+			border-left-color: var(--danger);
+		}
+
+		.toast-icon {
+			display: flex;
+			align-items: center;
+		}
+
+		.toast-icon-success {
+			color: var(--success);
+		}
+
+		.toast-icon-error {
+			color: var(--danger);
+		}
+
+		/* Scanning overlay effect */
+		.scanner-line {
+			display: none;
+			position: absolute;
+			left: 0;
+			width: 100%;
+			height: 4px;
+			background: linear-gradient(to bottom, transparent, var(--primary), transparent);
+			box-shadow: 0 0 15px var(--primary);
+			z-index: 10;
+			animation: scan 2s linear infinite;
+		}
+
+		@keyframes scan {
+			0% {
+				top: 0%;
+			}
+
+			50% {
+				top: 100%;
+			}
+
+			100% {
+				top: 0%;
+			}
+		}
+
+		/* Footer */
+		footer {
+			background-color: var(--bg-primary);
+			border-top: 1px solid var(--border-color);
+			padding: 16px;
+			text-align: center;
+			font-size: 12px;
+			color: var(--text-dark);
+			margin-top: auto;
+		}
+
+		/* Responsiveness */
+		@media (max-width: 1024px) {
+			.app-layout {
+				flex-direction: column;
+			}
+
+			.sidebar {
+				width: 100%;
+				max-height: none;
+				border-right: none;
+				border-bottom: 1px solid var(--border-color);
+			}
+
+			.workspace {
+				padding: 16px;
+				max-height: none;
+			}
+
+			.workspace-grid {
+				grid-template-columns: 1fr;
+			}
+
+			.metrics-grid {
+				grid-template-columns: repeat(2, 1fr);
+			}
+		}
+
+		@media (max-width: 640px) {
+			.metrics-grid {
+				grid-template-columns: 1fr;
+			}
+
+			header {
+				padding: 12px 16px;
+			}
+		}
+	</style>
 </head>
 
 <body>
-    <!-- Toast notifications -->
-    <div class="toast-container" id="toastContainer"></div>
-
-    <!-- Header block -->
-    <header>
-        <div class="brand-container">
-            <div class="logo-icon">
-                <i data-lucide="layers"></i>
-            </div>
-            <div>
-                <h1>TimberGuard AI</h1>
-                <div class="header-tagline">Hệ thống Giám sát Lỗi Bề mặt Gỗ thông minh</div>
-            </div>
-        </div>
-        
-        <div class="model-badge">
-            <span class="pulse-dot"></span>
-            <span>YOLOv8s: wood_defect_yolov8s-3</span>
-        </div>
-    </header>
-
-    <!-- Main Container -->
-    <div class="app-layout">
-        <!-- Sidebar Settings -->
-        <aside class="sidebar">
-            <!-- Parameters section -->
-            <div class="sidebar-section">
-                <div class="section-title">
-                    <i data-lucide="sliders-horizontal"></i>
-                    <span>Cấu hình phát hiện</span>
-                </div>
-                
-                <div class="control-group">
-                    <div class="control-label">
-                        <span>Độ tin cậy (Confidence)</span>
-                        <span class="control-val" id="valConf">0.25</span>
-                    </div>
-                    <div class="slider-wrapper">
-                        <input type="range" id="sliderConf" min="0.05" max="1.0" step="0.05" value="0.25">
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <div class="control-label">
-                        <span>Trùng khớp (IoU)</span>
-                        <span class="control-val" id="valIou">0.45</span>
-                    </div>
-                    <div class="slider-wrapper">
-                        <input type="range" id="sliderIou" min="0.05" max="1.0" step="0.05" value="0.45">
-                    </div>
-                </div>
-
-                <div class="action-row" style="margin-top: 4px;">
-                    <button class="btn btn-primary" id="btnApplyParams" style="flex: 1; padding: 8px 16px; font-size: 12px;">
-                        <i data-lucide="check" style="width: 14px; height: 14px;"></i> Áp dụng cài đặt
-                    </button>
-                </div>
-            </div>
-
-            <!-- Class Filter Section -->
-            <div class="sidebar-section">
-                <div class="section-title">
-                    <i data-lucide="filter"></i>
-                    <span>Bộ lọc phân lớp lỗi</span>
-                </div>
-                
-                <div class="class-list">
-                    <label class="class-item">
-                        <div class="class-checkbox-wrap">
-                            <input type="checkbox" class="class-filter" data-class="hole" checked>
-                            <span class="class-name">Lỗ thủng (Hole)</span>
-                        </div>
-                        <span class="class-color-badge badge-hole"></span>
-                    </label>
-                    <label class="class-item">
-                        <div class="class-checkbox-wrap">
-                            <input type="checkbox" class="class-filter" data-class="bubble" checked>
-                            <span class="class-name">Phồng bóng (Bubble)</span>
-                        </div>
-                        <span class="class-color-badge badge-bubble"></span>
-                    </label>
-                    <label class="class-item">
-                        <div class="class-checkbox-wrap">
-                            <input type="checkbox" class="class-filter" data-class="crack" checked>
-                            <span class="class-name">Vết nứt (Crack)</span>
-                        </div>
-                        <span class="class-color-badge badge-crack"></span>
-                    </label>
-                    <label class="class-item">
-                        <div class="class-checkbox-wrap">
-                            <input type="checkbox" class="class-filter" data-class="scratch" checked>
-                            <span class="class-name">Vết xước (Scratch)</span>
-                        </div>
-                        <span class="class-color-badge badge-scratch"></span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Quick Samples Section -->
-            <div class="sidebar-section">
-                <div class="section-title">
-                    <i data-lucide="image"></i>
-                    <span>Mẫu thử nghiệm nhanh</span>
-                </div>
-                <div class="samples-grid">
-                    <div class="sample-card" onclick="loadSample(1)" title="Ảnh Gỗ Mẫu 1">
-                        <img src="/static/samples/sample_1.jpg" alt="Sample 1">
-                        <div class="sample-label">Gỗ Mẫu 1</div>
-                    </div>
-                    <div class="sample-card" onclick="loadSample(2)" title="Ảnh Gỗ Mẫu 2">
-                        <img src="/static/samples/sample_2.jpg" alt="Sample 2">
-                        <div class="sample-label">Gỗ Mẫu 2</div>
-                    </div>
-                    <div class="sample-card" onclick="loadSample(3)" title="Ảnh Gỗ Mẫu 3">
-                        <img src="/static/samples/sample_3.jpg" alt="Sample 3">
-                        <div class="sample-label">Gỗ Mẫu 3</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- History Section -->
-            <div class="sidebar-section" style="margin-top: auto;">
-                <div class="section-title">
-                    <i data-lucide="history"></i>
-                    <span>Lịch sử phân tích</span>
-                </div>
-                <div class="history-list" id="historyList">
-                    <div style="font-size: 12px; color: var(--text-dark); text-align: center; padding: 12px;">Chưa có lịch sử</div>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main Workspace -->
-        <main class="workspace" id="workspace">
-            
-            <!-- Loading Overlay -->
-            <div class="loading-overlay" id="loadingOverlay">
-                <div class="spinner-outer">
-                    <div class="spinner-inner"></div>
-                </div>
-                <div class="loading-text" id="loadingText">Đang nhận diện khuyết tật gỗ...</div>
-            </div>
-
-            <!-- Step 1: Upload state -->
-            <div class="placeholder-container" id="uploadState">
-                <div class="placeholder-icon-group">
-                    <div class="placeholder-glow"></div>
-                    <i data-lucide="upload-cloud" class="placeholder-main-icon"></i>
-                </div>
-                <h2 class="placeholder-title">Bắt đầu Phân tích Bề mặt Gỗ</h2>
-                <p class="placeholder-desc">Kéo và thả tệp ảnh của bạn vào khu vực bên dưới, hoặc chọn từ một trong các mẫu thử nhanh ở thanh bên để chạy thử nghiệm.</p>
-                
-                <div class="upload-zone" id="dropZone">
-                    <div class="upload-icon">
-                        <i data-lucide="file-image" style="width: 32px; height: 32px;"></i>
-                    </div>
-                    <div>
-                        <p class="upload-text-main">Nhấp để tải lên hoặc kéo & thả hình ảnh</p>
-                        <p class="upload-text-sub">Hỗ trợ các file định dạng ảnh phổ biến</p>
-                    </div>
-                    <div class="upload-formats-badge">
-                        JPG, JPEG, PNG, WEBP, BMP
-                    </div>
-                    <input type="file" id="fileInput" accept="image/*">
-                </div>
-            </div>
-
-            <!-- Step 2: Results dashboard (initially hidden) -->
-            <div class="results-container" id="resultsState">
-                
-                <!-- Dashboard Cards -->
-                <div class="metrics-grid">
-                    <!-- Verdict card -->
-                    <div class="metric-card card-verdict" id="cardVerdict">
-                        <div class="metric-icon-wrap">
-                            <i data-lucide="shield-check" id="verdictIcon"></i>
-                        </div>
-                        <div class="metric-info">
-                            <span class="metric-title">Đánh giá chất lượng</span>
-                            <span class="metric-value" id="verdictText">PASS</span>
-                            <span class="metric-sub" id="verdictSubText">Không phát hiện lỗi</span>
-                        </div>
-                    </div>
-
-                    <!-- Defect count card -->
-                    <div class="metric-card card-defects">
-                        <div class="metric-icon-wrap">
-                            <i data-lucide="alert-triangle"></i>
-                        </div>
-                        <div class="metric-info">
-                            <span class="metric-title">Tổng số khuyết tật</span>
-                            <span class="metric-value" id="metricsTotalDefects">0</span>
-                            <span class="metric-sub">Lỗi hiển thị sau lọc</span>
-                        </div>
-                    </div>
-
-                    <!-- Inference speed card -->
-                    <div class="metric-card card-speed">
-                        <div class="metric-icon-wrap">
-                            <i data-lucide="cpu"></i>
-                        </div>
-                        <div class="metric-info">
-                            <span class="metric-title">Tốc độ xử lý</span>
-                            <span class="metric-value" id="metricsSpeed">0.0 ms</span>
-                            <span class="metric-sub" id="metricsSpeedDetail">Pre: 0ms | Post: 0ms</span>
-                        </div>
-                    </div>
-
-                    <!-- Highest confidence card -->
-                    <div class="metric-card card-conf">
-                        <div class="metric-icon-wrap">
-                            <i data-lucide="activity"></i>
-                        </div>
-                        <div class="metric-info">
-                            <span class="metric-title">Độ tin cậy cao nhất</span>
-                            <span class="metric-value" id="metricsMaxConf">0.0%</span>
-                            <span class="metric-sub" id="metricsMaxConfClass">Không có</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Main Grid: Image comparison and tables -->
-                <div class="workspace-grid">
-                    
-                    <!-- Left: Interactive Visualizer -->
-                    <div class="visualizer-card">
-                        <div class="visualizer-header">
-                            <span class="visualizer-title">
-                                <i data-lucide="eye" style="width: 16px; height: 16px; color: var(--primary);"></i>
-                                <span>Trực quan hóa kết quả</span>
-                            </span>
-                            
-                            <div class="tab-group">
-                                <button class="tab-btn active" data-tab="interactive" onclick="switchTab('interactive')">Tương tác Canvas</button>
-                                <button class="tab-btn" data-tab="model" onclick="switchTab('model')">Vẽ bởi Model</button>
-                                <button class="tab-btn" data-tab="raw" onclick="switchTab('raw')">Ảnh gốc</button>
-                            </div>
-                        </div>
-
-                        <div class="viewer-display" id="viewerDisplay">
-                            <div class="scanner-line" id="scannerLine"></div>
-                            
-                            <!-- Wrapper for interactive overlay -->
-                            <div class="viewer-image-wrapper">
-                                <img src="" id="displayImage" class="viewer-img" alt="Timber Board">
-                                <canvas id="canvasOverlay"></canvas>
-                            </div>
-                            
-                            <!-- Canvas details tooltip box -->
-                            <div class="canvas-tooltip" id="canvasTooltip"></div>
-                        </div>
-
-                        <div class="visualizer-header" style="border-top: 1px solid var(--border-color); border-bottom: none; background: transparent; padding: 12px 20px;">
-                            <span style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
-                                <i data-lucide="info" style="width: 14px; height: 14px; color: var(--primary);"></i>
-                                <span>Di chuột lên các vùng khoanh đỏ hoặc các dòng bảng lỗi để làm nổi bật vị trí.</span>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Right: Defect breakdown & details table -->
-                    <div class="details-panel">
-                        <!-- Defect Distribution Chart -->
-                        <div class="analytics-card">
-                            <div class="card-header-inner">
-                                <span class="card-title-inner">
-                                    <i data-lucide="bar-chart-3" style="width: 16px; height: 16px; color: var(--primary);"></i>
-                                    <span>Tỉ lệ loại khuyết tật</span>
-                                </span>
-                            </div>
-                            <div class="chart-list" id="chartList">
-                                <!-- Horizontal bars rendered dynamically -->
-                            </div>
-                        </div>
-
-                        <!-- Defect detailed table -->
-                        <div class="table-card">
-                            <div class="card-header-inner" style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 0;">
-                                <span class="card-title-inner">
-                                    <i data-lucide="list" style="width: 16px; height: 16px; color: var(--primary);"></i>
-                                    <span>Danh sách lỗi phát hiện</span>
-                                </span>
-                            </div>
-                            
-                            <div class="table-container">
-                                <table id="defectTable">
-                                    <thead>
-                                        <tr>
-                                            <th>STT</th>
-                                            <th>Loại lỗi</th>
-                                            <th>Độ tin cậy</th>
-                                            <th>Tọa độ (Box)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="defectTableBody">
-                                        <!-- Rows rendered dynamically -->
-                                    </tbody>
-                                </table>
-                                <div id="noDefectsMessage" class="no-data" style="display: none;">
-                                    Không phát hiện lỗi bề mặt!
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Actions row -->
-                        <div class="action-row" style="margin-top: 0;">
-                            <button class="btn btn-secondary" onclick="resetUpload()" style="flex: 1;">
-                                <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i> Quét ảnh khác
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2026 TimberGuard AI. Phát triển với công nghệ YOLOv8s & FastAPI. Tất cả các quyền được bảo lưu.</p>
-    </footer>
-
-    <!-- JS Logic -->
-    <script>
-        // DOM Elements
-        const dropZone = document.getElementById("dropZone");
-        const fileInput = document.getElementById("fileInput");
-        const uploadState = document.getElementById("uploadState");
-        const resultsState = document.getElementById("resultsState");
-        const displayImage = document.getElementById("displayImage");
-        const canvasOverlay = document.getElementById("canvasOverlay");
-        const ctxOverlay = canvasOverlay.getContext("2d");
-        const loadingOverlay = document.getElementById("loadingOverlay");
-        const loadingText = document.getElementById("loadingText");
-        
-        // Form & Config elements
-        const sliderConf = document.getElementById("sliderConf");
-        const sliderIou = document.getElementById("sliderIou");
-        const valConf = document.getElementById("valConf");
-        const valIou = document.getElementById("valIou");
-        const btnApplyParams = document.getElementById("btnApplyParams");
-        const classFilters = document.querySelectorAll(".class-filter");
-
-        // Metrics elements
-        const cardVerdict = document.getElementById("cardVerdict");
-        const verdictIcon = document.getElementById("verdictIcon");
-        const verdictText = document.getElementById("verdictText");
-        const verdictSubText = document.getElementById("verdictSubText");
-        const metricsTotalDefects = document.getElementById("metricsTotalDefects");
-        const metricsSpeed = document.getElementById("metricsSpeed");
-        const metricsSpeedDetail = document.getElementById("metricsSpeedDetail");
-        const metricsMaxConf = document.getElementById("metricsMaxConf");
-        const metricsMaxConfClass = document.getElementById("metricsMaxConfClass");
-
-        // Table & Charts elements
-        const defectTableBody = document.getElementById("defectTableBody");
-        const noDefectsMessage = document.getElementById("noDefectsMessage");
-        const chartList = document.getElementById("chartList");
-        const historyList = document.getElementById("historyList");
-        const scannerLine = document.getElementById("scannerLine");
-        const canvasTooltip = document.getElementById("canvasTooltip");
-
-        // Application State
-        let currentRawFile = null;         // Currently uploaded File object (if uploaded via drag & drop)
-        let currentSampleId = null;        // ID of current sample image (1, 2, or 3) if testing sample
-        let activeTab = "interactive";     // 'interactive', 'model', or 'raw'
-        let serverResponseData = null;     // Complete response from prediction endpoint
-        let activeHoverIndex = null;       // Currently hovered defect item index
-        let localHistory = [];             // Analysis runs cached locally
-
-        // Class colors for interactive drawing
-        const classColorMap = {
-            "hole": { border: "#ef4444", fill: "rgba(239, 68, 68, 0.25)", text: "#ffffff" },
-            "bubble": { border: "#3b82f6", fill: "rgba(59, 130, 246, 0.25)", text: "#ffffff" },
-            "crack": { border: "#10b981", fill: "rgba(16, 185, 129, 0.25)", text: "#ffffff" },
-            "scratch": { border: "#eab308", fill: "rgba(234, 179, 8, 0.25)", text: "#0b0f19" }
-        };
-
-        const classVietnameseMap = {
-            "hole": "Lỗ thủng",
-            "bubble": "Phồng bóng / bọt khí",
-            "crack": "Vết nứt",
-            "scratch": "Vết trầy xước"
-        };
-
-        // Initialize Lucide Icons on DOM Load
-        document.addEventListener("DOMContentLoaded", () => {
-            lucide.createIcons();
-            loadHistoryFromStorage();
-            
-            // Slider Listeners
-            sliderConf.addEventListener("input", (e) => { valConf.innerText = parseFloat(e.target.value).toFixed(2); });
-            sliderIou.addEventListener("input", (e) => { valIou.innerText = parseFloat(e.target.value).toFixed(2); });
-            
-            // Apply Configuration button
-            btnApplyParams.addEventListener("click", () => {
-                if (currentRawFile || currentSampleId) {
-                    runDetection();
-                } else {
-                    showToast("Vui lòng tải lên ảnh hoặc chọn mẫu thử trước khi áp dụng.", "error");
-                }
-            });
-
-            // Class filters change trigger redrawing of canvas/table without API re-call
-            classFilters.forEach(filter => {
-                filter.addEventListener("change", () => {
-                    if (serverResponseData) {
-                        updateUIWithResults();
-                    }
-                });
-            });
-
-            // Overlay mouse listeners for box hovering tooltips
-            canvasOverlay.addEventListener("mousemove", handleCanvasMouseMove);
-            canvasOverlay.addEventListener("mouseleave", handleCanvasMouseLeave);
-        });
-
-        // ==========================================
-        // DRAG & DROP & FILE SELECTION HANDLING
-        // ==========================================
-        
-        // Trigger file input dialog on drop zone click
-        dropZone.addEventListener("click", () => {
-            fileInput.click();
-        });
-
-        fileInput.addEventListener("change", (e) => {
-            const file = e.target.files[0];
-            if (file) handleImageFileSelected(file);
-        });
-
-        // Drop zone drag events
-        ["dragenter", "dragover"].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropZone.classList.add("dragover");
-            }, false);
-        });
-
-        ["dragleave", "drop"].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropZone.classList.remove("dragover");
-            }, false);
-        });
-
-        dropZone.addEventListener("drop", (e) => {
-            const dt = e.dataTransfer;
-            const file = dt.files[0];
-            if (file) {
-                handleImageFileSelected(file);
-            }
-        });
-
-        // Handle selected image file
-        function handleImageFileSelected(file) {
-            // Validate file format
-            const validTypes = ["image/jpeg", "image/png", "image/webp", "image/bmp"];
-            if (!validTypes.includes(file.type)) {
-                showToast("Định dạng file không được hỗ trợ! Hãy tải lên file ảnh JPG, PNG, WEBP hoặc BMP.", "error");
-                return;
-            }
-
-            currentRawFile = file;
-            currentSampleId = null; // Reset sample flag
-            
-            showToast(`Đã nhận ảnh: ${file.name}`, "success");
-            
-            // Go ahead and predict automatically
-            runDetection();
-        }
-
-        // Load sample image
-        async function loadSample(sampleId) {
-            currentSampleId = sampleId;
-            currentRawFile = null; // Reset custom file upload flag
-            
-            showToast(`Đang tải ảnh gỗ mẫu ${sampleId}...`, "success");
-            runDetection();
-        }
-
-        // ==========================================
-        // API INFERENCE HANDLER
-        // ==========================================
-        
-        async function runDetection() {
-            if (!currentRawFile && !currentSampleId) {
-                showToast("Không tìm thấy dữ liệu hình ảnh đầu vào.", "error");
-                return;
-            }
-
-            // Show loading state
-            loadingOverlay.style.display = "flex";
-            scannerLine.style.display = "block";
-            loadingText.innerText = "Đang chạy mô hình YOLOv8s...";
-
-            try {
-                let fileBlob = null;
-                let filename = "";
-
-                if (currentRawFile) {
-                    fileBlob = currentRawFile;
-                    filename = currentRawFile.name;
-                } else if (currentSampleId) {
-                    const sampleUrl = `/static/samples/sample_${currentSampleId}.jpg`;
-                    const response = await fetch(sampleUrl);
-                    if (!response.ok) throw new Error("Không thể tải ảnh mẫu từ server.");
-                    fileBlob = await response.blob();
-                    filename = `sample_${currentSampleId}.jpg`;
-                }
-
-                // Construct Form Data
-                const formData = new FormData();
-                formData.append("file", fileBlob, filename);
-
-                // Append parameters
-                const confVal = parseFloat(sliderConf.value);
-                const iouVal = parseFloat(sliderIou.value);
-                
-                const fetchUrl = `/predict?conf=${confVal}&iou=${iouVal}`;
-                
-                const response = await fetch(fetchUrl, {
-                    method: "POST",
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.detail || "Không thể phân tích ảnh.");
-                }
-
-                serverResponseData = await response.json();
-                
-                showToast("Nhận diện thành công!", "success");
-                
-                // Save run to history
-                addRunToHistory(filename, serverResponseData);
-
-                // Transition layout
-                uploadState.style.display = "none";
-                resultsState.style.display = "flex";
-
-                // Load initial image into view
-                activeTab = "interactive";
-                switchTab(activeTab);
-
-            } catch (error) {
-                console.error(error);
-                showToast(error.message || "Lỗi khi giao tiếp với server.", "error");
-            } finally {
-                loadingOverlay.style.display = "none";
-                scannerLine.style.display = "none";
-            }
-        }
-
-        // ==========================================
-        // TABS AND DISPLAY CONTROLLER
-        // ==========================================
-        
-        function switchTab(tabName) {
-            activeTab = tabName;
-            
-            // Toggle active classes on tab buttons
-            document.querySelectorAll(".tab-btn").forEach(btn => {
-                if (btn.getAttribute("data-tab") === tabName) {
-                    btn.classList.add("active");
-                } else {
-                    btn.classList.remove("active");
-                }
-            });
-
-            if (!serverResponseData) return;
-
-            // Set images source
-            if (tabName === "interactive" || tabName === "raw") {
-                displayImage.src = serverResponseData.original_image_url;
-            } else if (tabName === "model") {
-                displayImage.src = serverResponseData.result_image_url;
-            }
-
-            // Once the image is loaded, re-draw the canvas layers
-            displayImage.onload = () => {
-                resizeCanvasOverlay();
-                updateUIWithResults();
-            };
-            
-            // If image is already cached/loaded
-            if (displayImage.complete) {
-                resizeCanvasOverlay();
-                updateUIWithResults();
-            }
-        }
-
-        function resizeCanvasOverlay() {
-            // Resize canvas overlay to fit the styled dimensions of the image on the screen
-            canvasOverlay.width = displayImage.clientWidth;
-            canvasOverlay.height = displayImage.clientHeight;
-        }
-
-        // Listen for window resize to adjust responsive canvases
-        window.addEventListener("resize", () => {
-            if (resultsState.style.display === "flex") {
-                resizeCanvasOverlay();
-                drawInteractiveBoxes();
-            }
-        });
-
-        // Reset state to show upload zone
-        function resetUpload() {
-            currentRawFile = null;
-            currentSampleId = null;
-            serverResponseData = null;
-            fileInput.value = "";
-            
-            resultsState.style.display = "none";
-            uploadState.style.display = "flex";
-        }
-
-        // ==========================================
-        // DYNAMIC FILTERING & UI RENDERING
-        // ==========================================
-        
-        function getFilteredDetections() {
-            if (!serverResponseData) return [];
-            
-            // Get selected classes from checkboxes
-            const activeClasses = Array.from(classFilters)
-                .filter(cb => cb.checked)
-                .map(cb => cb.getAttribute("data-class"));
-
-            return serverResponseData.detections.filter(d => activeClasses.includes(d.class_name));
-        }
-
-        function updateUIWithResults() {
-            const filteredDetections = getFilteredDetections();
-            
-            // 1. Draw Boxes on canvas overlay
-            drawInteractiveBoxes(filteredDetections);
-
-            // 2. Render metric dashboard cards
-            renderMetricsCards(filteredDetections);
-
-            // 3. Render table of errors
-            renderDefectTable(filteredDetections);
-
-            // 4. Render charts
-            renderDefectCharts(filteredDetections);
-        }
-
-        // Draw bounding boxes on Canvas overlay
-        function drawInteractiveBoxes(detectionsInput) {
-            ctxOverlay.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
-            
-            // Only draw boxes in "interactive" tab
-            if (activeTab !== "interactive") {
-                canvasOverlay.style.pointerEvents = "none"; // disable hover trigger on static views
-                return;
-            }
-            
-            canvasOverlay.style.pointerEvents = "auto";
-            
-            const detections = detectionsInput || getFilteredDetections();
-            if (detections.length === 0) return;
-
-            // Calculate scale ratios
-            const scaleX = canvasOverlay.width / displayImage.naturalWidth;
-            const scaleY = canvasOverlay.height / displayImage.naturalHeight;
-
-            detections.forEach((d, idx) => {
-                const x1 = d.bbox.x1 * scaleX;
-                const y1 = d.bbox.y1 * scaleY;
-                const x2 = d.bbox.x2 * scaleX;
-                const y2 = d.bbox.y2 * scaleY;
-                const width = x2 - x1;
-                const height = y2 - y1;
-
-                const style = classColorMap[d.class_name] || { border: "#f59e0b", fill: "rgba(245, 158, 11, 0.2)" };
-
-                // Draw bounding box rectangle
-                ctxOverlay.beginPath();
-                ctxOverlay.rect(x1, y1, width, height);
-                
-                // Highlight box style if hovered in table
-                if (idx === activeHoverIndex) {
-                    ctxOverlay.lineWidth = 4;
-                    ctxOverlay.strokeStyle = "#ffffff";
-                    ctxOverlay.fillStyle = "rgba(255, 255, 255, 0.15)";
-                    ctxOverlay.stroke();
-                    ctxOverlay.fill();
-                    
-                    // Extra glowing frame
-                    ctxOverlay.lineWidth = 1;
-                    ctxOverlay.strokeStyle = style.border;
-                    ctxOverlay.stroke();
-                } else {
-                    ctxOverlay.lineWidth = 2;
-                    ctxOverlay.strokeStyle = style.border;
-                    ctxOverlay.fillStyle = style.fill;
-                    ctxOverlay.stroke();
-                    ctxOverlay.fill();
-                }
-
-                // Small text label above box
-                ctxOverlay.fillStyle = style.border;
-                ctxOverlay.font = "bold 10px " + getComputedStyle(document.body).fontFamily;
-                
-                const labelText = `${d.class_name.toUpperCase()} ${(d.confidence * 100).toFixed(0)}%`;
-                
-                // Draw badge background for class text
-                const textWidth = ctxOverlay.measureText(labelText).width;
-                ctxOverlay.fillStyle = style.border;
-                ctxOverlay.fillRect(x1 - 1, y1 - 14, textWidth + 6, 14);
-                
-                // Text color
-                ctxOverlay.fillStyle = style.text || "#ffffff";
-                ctxOverlay.fillText(labelText, x1 + 2, y1 - 4);
-            });
-        }
-
-        // Render dashboard values
-        function renderMetricsCards(detections) {
-            const total = detections.length;
-            metricsTotalDefects.innerText = total;
-
-            // Compute verdict status based on FILTERED defects
-            // If total defects is 0, PASS
-            // If there's any crack or hole, or any defect has conf >= 0.5: NG - Serious Defect
-            // Else: NG - Minor Defect
-            let verdict = "PASS";
-            let subtext = "Chất lượng đạt chuẩn";
-            let cssClass = "pass";
-            let iconName = "shield-check";
-
-            if (total > 0) {
-                const seriousClasses = ["crack", "hole"];
-                const hasSerious = detections.some(d => seriousClasses.includes(d.class_name) || d.confidence >= 0.5);
-                
-                if (hasSerious) {
-                    verdict = "REJECT";
-                    subtext = "Lỗi nghiêm trọng (Hole/Crack)";
-                    cssClass = "ng-serious";
-                    iconName = "shield-alert";
-                } else {
-                    verdict = "WARNING";
-                    subtext = "Khuyết tật nhỏ bề mặt";
-                    cssClass = "ng-minor";
-                    iconName = "alert-circle";
-                }
-            }
-
-            // Set Verdict style and contents
-            cardVerdict.className = `metric-card card-verdict ${cssClass}`;
-            verdictText.innerText = verdict;
-            verdictSubText.innerText = subtext;
-            verdictIcon.setAttribute("data-lucide", iconName);
-
-            // Compute speed values from model speed
-            if (serverResponseData.speed) {
-                const infSpeed = serverResponseData.speed.inference;
-                metricsSpeed.innerText = `${infSpeed} ms`;
-                metricsSpeedDetail.innerText = `Pre: ${serverResponseData.speed.preprocess}ms | Post: ${serverResponseData.speed.postprocess}ms`;
-            } else {
-                metricsSpeed.innerText = "N/A";
-                metricsSpeedDetail.innerText = "Không có thông số";
-            }
-
-            // Max confidence
-            if (total > 0) {
-                const highestConfItem = detections.reduce((max, item) => item.confidence > max.confidence ? item : max, detections[0]);
-                metricsMaxConf.innerText = `${(highestConfItem.confidence * 100).toFixed(1)}%`;
-                metricsMaxConfClass.innerText = `Loại lỗi: ${classVietnameseMap[highestConfItem.class_name] || highestConfItem.class_name}`;
-            } else {
-                metricsMaxConf.innerText = "0.0%";
-                metricsMaxConfClass.innerText = "Không có";
-            }
-
-            lucide.createIcons({ scope: cardVerdict });
-        }
-
-        // Render Table list of defects
-        function renderDefectTable(detections) {
-            defectTableBody.innerHTML = "";
-            
-            if (detections.length === 0) {
-                noDefectsMessage.style.display = "block";
-                return;
-            }
-
-            noDefectsMessage.style.display = "none";
-
-            detections.forEach((d, index) => {
-                const row = document.createElement("tr");
-                row.className = "table-row-defect";
-                
-                // Event triggers for highlights
-                row.addEventListener("mouseenter", () => {
-                    activeHoverIndex = index;
-                    row.classList.add("highlighted");
-                    drawInteractiveBoxes(detections);
-                });
-
-                row.addEventListener("mouseleave", () => {
-                    activeHoverIndex = null;
-                    row.classList.remove("highlighted");
-                    drawInteractiveBoxes(detections);
-                });
-
-                const confPercent = (d.confidence * 100).toFixed(1);
-                
-                let confBadgeColor = "rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3);";
-                if (d.confidence < 0.4) {
-                    confBadgeColor = "rgba(245, 158, 11, 0.15); color: var(--primary); border: 1px solid rgba(245, 158, 11, 0.3);";
-                } else if (d.confidence >= 0.7) {
-                    confBadgeColor = "rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3);";
-                }
-
-                row.innerHTML = `
+	<!-- Toast notifications -->
+	<div class="toast-container" id="toastContainer"></div>
+
+	<!-- Header block -->
+	<header>
+		<div class="brand-container">
+			<div class="logo-icon">
+				<i data-lucide="layers"></i>
+			</div>
+			<div>
+				<h1>TimberGuard AI</h1>
+				<div class="header-tagline">Hệ thống Giám sát Lỗi Bề mặt Gỗ thông minh</div>
+			</div>
+		</div>
+
+		<div class="model-badge">
+			<span class="pulse-dot"></span>
+			<span>YOLOv8s: wood_defect_yolov8s-3</span>
+		</div>
+	</header>
+
+	<!-- Main Container -->
+	<div class="app-layout">
+		<!-- Sidebar Settings -->
+		<aside class="sidebar">
+			<!-- Parameters section -->
+			<div class="sidebar-section">
+				<div class="section-title">
+					<i data-lucide="sliders-horizontal"></i>
+					<span>Cấu hình phát hiện</span>
+				</div>
+
+				<div class="control-group">
+					<div class="control-label">
+						<span>Độ tin cậy (Confidence)</span>
+						<span class="control-val" id="valConf">0.25</span>
+					</div>
+					<div class="slider-wrapper">
+						<input type="range" id="sliderConf" min="0.05" max="1.0" step="0.05" value="0.25">
+					</div>
+				</div>
+
+				<div class="control-group">
+					<div class="control-label">
+						<span>Trùng khớp (IoU)</span>
+						<span class="control-val" id="valIou">0.45</span>
+					</div>
+					<div class="slider-wrapper">
+						<input type="range" id="sliderIou" min="0.05" max="1.0" step="0.05" value="0.45">
+					</div>
+				</div>
+
+				<div class="action-row" style="margin-top: 4px;">
+					<button class="btn btn-primary" id="btnApplyParams" style="flex: 1; padding: 8px 16px; font-size: 12px;">
+						<i data-lucide="check" style="width: 14px; height: 14px;"></i> Áp dụng cài đặt
+					</button>
+				</div>
+			</div>
+
+			<!-- Class Filter Section -->
+			<div class="sidebar-section">
+				<div class="section-title">
+					<i data-lucide="filter"></i>
+					<span>Bộ lọc phân lớp lỗi</span>
+				</div>
+
+				<div class="class-list">
+					<label class="class-item">
+						<div class="class-checkbox-wrap">
+							<input type="checkbox" class="class-filter" data-class="hole" checked>
+							<span class="class-name">Lỗ thủng (Hole)</span>
+						</div>
+						<span class="class-color-badge badge-hole"></span>
+					</label>
+					<label class="class-item">
+						<div class="class-checkbox-wrap">
+							<input type="checkbox" class="class-filter" data-class="bubble" checked>
+							<span class="class-name">Phồng bóng (Bubble)</span>
+						</div>
+						<span class="class-color-badge badge-bubble"></span>
+					</label>
+					<label class="class-item">
+						<div class="class-checkbox-wrap">
+							<input type="checkbox" class="class-filter" data-class="crack" checked>
+							<span class="class-name">Vết nứt (Crack)</span>
+						</div>
+						<span class="class-color-badge badge-crack"></span>
+					</label>
+					<label class="class-item">
+						<div class="class-checkbox-wrap">
+							<input type="checkbox" class="class-filter" data-class="scratch" checked>
+							<span class="class-name">Vết xước (Scratch)</span>
+						</div>
+						<span class="class-color-badge badge-scratch"></span>
+					</label>
+				</div>
+			</div>
+
+			<!-- Quick Samples Section -->
+			<div class="sidebar-section">
+				<div class="section-title">
+					<i data-lucide="image"></i>
+					<span>Mẫu thử nghiệm nhanh</span>
+				</div>
+				<div class="samples-grid">
+					<div class="sample-card" onclick="loadSample(1)" title="Ảnh Gỗ Mẫu 1">
+						<img src="/static/samples/sample_1.png" alt="Sample 1">
+						<div class="sample-label">Gỗ Mẫu 1</div>
+					</div>
+					<div class="sample-card" onclick="loadSample(2)" title="Ảnh Gỗ Mẫu 2">
+						<img src="/static/samples/sample_2.png" alt="Sample 2">
+						<div class="sample-label">Gỗ Mẫu 2</div>
+					</div>
+					<div class="sample-card" onclick="loadSample(3)" title="Ảnh Gỗ Mẫu 3">
+						<img src="/static/samples/sample_3.png" alt="Sample 3">
+						<div class="sample-label">Gỗ Mẫu 3</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- History Section -->
+			<div class="sidebar-section" style="margin-top: auto;">
+				<div class="section-title">
+					<i data-lucide="history"></i>
+					<span>Lịch sử phân tích</span>
+				</div>
+				<div class="history-list" id="historyList">
+					<div style="font-size: 12px; color: var(--text-dark); text-align: center; padding: 12px;">Chưa có lịch sử
+					</div>
+				</div>
+			</div>
+		</aside>
+
+		<!-- Main Workspace -->
+		<main class="workspace" id="workspace">
+
+			<!-- Loading Overlay -->
+			<div class="loading-overlay" id="loadingOverlay">
+				<div class="spinner-outer">
+					<div class="spinner-inner"></div>
+				</div>
+				<div class="loading-text" id="loadingText">Đang nhận diện khuyết tật gỗ...</div>
+			</div>
+
+			<!-- Step 1: Upload state -->
+			<div class="placeholder-container" id="uploadState">
+				<div class="placeholder-icon-group">
+					<div class="placeholder-glow"></div>
+					<i data-lucide="upload-cloud" class="placeholder-main-icon"></i>
+				</div>
+				<h2 class="placeholder-title">Bắt đầu Phân tích Bề mặt Gỗ</h2>
+				<p class="placeholder-desc">Kéo và thả tệp ảnh của bạn vào khu vực bên dưới, hoặc chọn từ một trong các mẫu thử
+					nhanh ở thanh bên để chạy thử nghiệm.</p>
+
+				<div class="upload-zone" id="dropZone">
+					<div class="upload-icon">
+						<i data-lucide="file-image" style="width: 32px; height: 32px;"></i>
+					</div>
+					<div>
+						<p class="upload-text-main">Nhấp để tải lên hoặc kéo & thả hình ảnh</p>
+						<p class="upload-text-sub">Hỗ trợ các file định dạng ảnh phổ biến</p>
+					</div>
+					<div class="upload-formats-badge">
+						JPG, JPEG, PNG, WEBP, BMP
+					</div>
+					<input type="file" id="fileInput" accept="image/*">
+				</div>
+			</div>
+
+			<!-- Step 2: Results dashboard (initially hidden) -->
+			<div class="results-container" id="resultsState">
+
+				<!-- Dashboard Cards -->
+				<div class="metrics-grid">
+					<!-- Verdict card -->
+					<div class="metric-card card-verdict" id="cardVerdict">
+						<div class="metric-icon-wrap">
+							<i data-lucide="shield-check" id="verdictIcon"></i>
+						</div>
+						<div class="metric-info">
+							<span class="metric-title">Đánh giá chất lượng</span>
+							<span class="metric-value" id="verdictText">PASS</span>
+							<span class="metric-sub" id="verdictSubText">Không phát hiện lỗi</span>
+						</div>
+					</div>
+
+					<!-- Defect count card -->
+					<div class="metric-card card-defects">
+						<div class="metric-icon-wrap">
+							<i data-lucide="alert-triangle"></i>
+						</div>
+						<div class="metric-info">
+							<span class="metric-title">Tổng số khuyết tật</span>
+							<span class="metric-value" id="metricsTotalDefects">0</span>
+							<span class="metric-sub">Lỗi hiển thị sau lọc</span>
+						</div>
+					</div>
+
+					<!-- Inference speed card -->
+					<div class="metric-card card-speed">
+						<div class="metric-icon-wrap">
+							<i data-lucide="cpu"></i>
+						</div>
+						<div class="metric-info">
+							<span class="metric-title">Tốc độ xử lý</span>
+							<span class="metric-value" id="metricsSpeed">0.0 ms</span>
+							<span class="metric-sub" id="metricsSpeedDetail">Pre: 0ms | Post: 0ms</span>
+						</div>
+					</div>
+
+					<!-- Highest confidence card -->
+					<div class="metric-card card-conf">
+						<div class="metric-icon-wrap">
+							<i data-lucide="activity"></i>
+						</div>
+						<div class="metric-info">
+							<span class="metric-title">Độ tin cậy cao nhất</span>
+							<span class="metric-value" id="metricsMaxConf">0.0%</span>
+							<span class="metric-sub" id="metricsMaxConfClass">Không có</span>
+						</div>
+					</div>
+				</div>
+
+				<!-- Main Grid: Image comparison and tables -->
+				<div class="workspace-grid">
+
+					<!-- Left: Interactive Visualizer -->
+					<div class="visualizer-card">
+						<div class="visualizer-header">
+							<span class="visualizer-title">
+								<i data-lucide="eye" style="width: 16px; height: 16px; color: var(--primary);"></i>
+								<span>Trực quan hóa kết quả</span>
+							</span>
+
+							<div class="tab-group">
+								<button class="tab-btn active" data-tab="interactive" onclick="switchTab('interactive')">Tương tác
+									Canvas</button>
+								<button class="tab-btn" data-tab="model" onclick="switchTab('model')">Vẽ bởi Model</button>
+								<button class="tab-btn" data-tab="raw" onclick="switchTab('raw')">Ảnh gốc</button>
+							</div>
+						</div>
+
+						<div class="viewer-display" id="viewerDisplay">
+							<div class="scanner-line" id="scannerLine"></div>
+
+							<!-- Wrapper for interactive overlay -->
+							<div class="viewer-image-wrapper">
+								<img src="" id="displayImage" class="viewer-img" alt="Timber Board">
+								<canvas id="canvasOverlay"></canvas>
+							</div>
+
+							<!-- Canvas details tooltip box -->
+							<div class="canvas-tooltip" id="canvasTooltip"></div>
+						</div>
+
+						<div class="visualizer-header"
+							style="border-top: 1px solid var(--border-color); border-bottom: none; background: transparent; padding: 12px 20px;">
+							<span style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+								<i data-lucide="info" style="width: 14px; height: 14px; color: var(--primary);"></i>
+								<span>Di chuột lên các vùng khoanh đỏ hoặc các dòng bảng lỗi để làm nổi bật vị trí.</span>
+							</span>
+						</div>
+					</div>
+
+					<!-- Right: Defect breakdown & details table -->
+					<div class="details-panel">
+						<!-- Defect Distribution Chart -->
+						<div class="analytics-card">
+							<div class="card-header-inner">
+								<span class="card-title-inner">
+									<i data-lucide="bar-chart-3" style="width: 16px; height: 16px; color: var(--primary);"></i>
+									<span>Tỉ lệ loại khuyết tật</span>
+								</span>
+							</div>
+							<div class="chart-list" id="chartList">
+								<!-- Horizontal bars rendered dynamically -->
+							</div>
+						</div>
+
+						<!-- Defect detailed table -->
+						<div class="table-card">
+							<div class="card-header-inner"
+								style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 0;">
+								<span class="card-title-inner">
+									<i data-lucide="list" style="width: 16px; height: 16px; color: var(--primary);"></i>
+									<span>Danh sách lỗi phát hiện</span>
+								</span>
+							</div>
+
+							<div class="table-container">
+								<table id="defectTable">
+									<thead>
+										<tr>
+											<th>STT</th>
+											<th>Loại lỗi</th>
+											<th>Độ tin cậy</th>
+											<th>Tọa độ (Box)</th>
+										</tr>
+									</thead>
+									<tbody id="defectTableBody">
+										<!-- Rows rendered dynamically -->
+									</tbody>
+								</table>
+								<div id="noDefectsMessage" class="no-data" style="display: none;">
+									Không phát hiện lỗi bề mặt!
+								</div>
+							</div>
+						</div>
+
+						<!-- Actions row -->
+						<div class="action-row" style="margin-top: 0;">
+							<button class="btn btn-secondary" onclick="resetUpload()" style="flex: 1;">
+								<i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i> Quét ảnh khác
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+	</div>
+
+	<!-- Footer -->
+	<footer>
+		<p>&copy; 2026 TimberGuard AI. Phát triển với công nghệ YOLOv8s & FastAPI. Tất cả các quyền được bảo lưu.</p>
+	</footer>
+
+	<!-- JS Logic -->
+	<script>
+		// DOM Elements
+		const dropZone = document.getElementById("dropZone");
+		const fileInput = document.getElementById("fileInput");
+		const uploadState = document.getElementById("uploadState");
+		const resultsState = document.getElementById("resultsState");
+		const displayImage = document.getElementById("displayImage");
+		const canvasOverlay = document.getElementById("canvasOverlay");
+		const ctxOverlay = canvasOverlay.getContext("2d");
+		const loadingOverlay = document.getElementById("loadingOverlay");
+		const loadingText = document.getElementById("loadingText");
+
+		// Form & Config elements
+		const sliderConf = document.getElementById("sliderConf");
+		const sliderIou = document.getElementById("sliderIou");
+		const valConf = document.getElementById("valConf");
+		const valIou = document.getElementById("valIou");
+		const btnApplyParams = document.getElementById("btnApplyParams");
+		const classFilters = document.querySelectorAll(".class-filter");
+
+		// Metrics elements
+		const cardVerdict = document.getElementById("cardVerdict");
+		const verdictIcon = document.getElementById("verdictIcon");
+		const verdictText = document.getElementById("verdictText");
+		const verdictSubText = document.getElementById("verdictSubText");
+		const metricsTotalDefects = document.getElementById("metricsTotalDefects");
+		const metricsSpeed = document.getElementById("metricsSpeed");
+		const metricsSpeedDetail = document.getElementById("metricsSpeedDetail");
+		const metricsMaxConf = document.getElementById("metricsMaxConf");
+		const metricsMaxConfClass = document.getElementById("metricsMaxConfClass");
+
+		// Table & Charts elements
+		const defectTableBody = document.getElementById("defectTableBody");
+		const noDefectsMessage = document.getElementById("noDefectsMessage");
+		const chartList = document.getElementById("chartList");
+		const historyList = document.getElementById("historyList");
+		const scannerLine = document.getElementById("scannerLine");
+		const canvasTooltip = document.getElementById("canvasTooltip");
+
+		// Application State
+		let currentRawFile = null;         // Currently uploaded File object (if uploaded via drag & drop)
+		let currentSampleId = null;        // ID of current sample image (1, 2, or 3) if testing sample
+		let activeTab = "interactive";     // 'interactive', 'model', or 'raw'
+		let serverResponseData = null;     // Complete response from prediction endpoint
+		let activeHoverIndex = null;       // Currently hovered defect item index
+		let localHistory = [];             // Analysis runs cached locally
+
+		// Class colors for interactive drawing
+		const classColorMap = {
+			"hole": { border: "#ef4444", fill: "rgba(239, 68, 68, 0.25)", text: "#ffffff" },
+			"bubble": { border: "#3b82f6", fill: "rgba(59, 130, 246, 0.25)", text: "#ffffff" },
+			"crack": { border: "#10b981", fill: "rgba(16, 185, 129, 0.25)", text: "#ffffff" },
+			"scratch": { border: "#eab308", fill: "rgba(234, 179, 8, 0.25)", text: "#0b0f19" }
+		};
+
+		const classVietnameseMap = {
+			"hole": "Lỗ thủng",
+			"bubble": "Phồng bóng / bọt khí",
+			"crack": "Vết nứt",
+			"scratch": "Vết trầy xước"
+		};
+
+		// Initialize Lucide Icons on DOM Load
+		document.addEventListener("DOMContentLoaded", () => {
+			lucide.createIcons();
+			loadHistoryFromStorage();
+
+			// Slider Listeners
+			sliderConf.addEventListener("input", (e) => { valConf.innerText = parseFloat(e.target.value).toFixed(2); });
+			sliderIou.addEventListener("input", (e) => { valIou.innerText = parseFloat(e.target.value).toFixed(2); });
+
+			// Apply Configuration button
+			btnApplyParams.addEventListener("click", () => {
+				if (currentRawFile || currentSampleId) {
+					runDetection();
+				} else {
+					showToast("Vui lòng tải lên ảnh hoặc chọn mẫu thử trước khi áp dụng.", "error");
+				}
+			});
+
+			// Class filters change trigger redrawing of canvas/table without API re-call
+			classFilters.forEach(filter => {
+				filter.addEventListener("change", () => {
+					if (serverResponseData) {
+						updateUIWithResults();
+					}
+				});
+			});
+
+			// Overlay mouse listeners for box hovering tooltips
+			canvasOverlay.addEventListener("mousemove", handleCanvasMouseMove);
+			canvasOverlay.addEventListener("mouseleave", handleCanvasMouseLeave);
+		});
+
+		// ==========================================
+		// DRAG & DROP & FILE SELECTION HANDLING
+		// ==========================================
+
+		// Trigger file input dialog on drop zone click
+		dropZone.addEventListener("click", () => {
+			fileInput.click();
+		});
+
+		fileInput.addEventListener("change", (e) => {
+			const file = e.target.files[0];
+			if (file) handleImageFileSelected(file);
+		});
+
+		// Drop zone drag events
+		["dragenter", "dragover"].forEach(eventName => {
+			dropZone.addEventListener(eventName, (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				dropZone.classList.add("dragover");
+			}, false);
+		});
+
+		["dragleave", "drop"].forEach(eventName => {
+			dropZone.addEventListener(eventName, (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				dropZone.classList.remove("dragover");
+			}, false);
+		});
+
+		dropZone.addEventListener("drop", (e) => {
+			const dt = e.dataTransfer;
+			const file = dt.files[0];
+			if (file) {
+				handleImageFileSelected(file);
+			}
+		});
+
+		// Handle selected image file
+		function handleImageFileSelected(file) {
+			// Validate file format
+			const validTypes = ["image/jpeg", "image/png", "image/webp", "image/bmp"];
+			if (!validTypes.includes(file.type)) {
+				showToast("Định dạng file không được hỗ trợ! Hãy tải lên file ảnh JPG, PNG, WEBP hoặc BMP.", "error");
+				return;
+			}
+
+			currentRawFile = file;
+			currentSampleId = null; // Reset sample flag
+
+			showToast(`Đã nhận ảnh: ${file.name}`, "success");
+
+			// Go ahead and predict automatically
+			runDetection();
+		}
+
+		// Load sample image
+		async function loadSample(sampleId) {
+			currentSampleId = sampleId;
+			currentRawFile = null; // Reset custom file upload flag
+
+			showToast(`Đang tải ảnh gỗ mẫu ${sampleId}...`, "success");
+			runDetection();
+		}
+
+		// ==========================================
+		// API INFERENCE HANDLER
+		// ==========================================
+
+		async function runDetection() {
+			if (!currentRawFile && !currentSampleId) {
+				showToast("Không tìm thấy dữ liệu hình ảnh đầu vào.", "error");
+				return;
+			}
+
+			// Show loading state
+			loadingOverlay.style.display = "flex";
+			scannerLine.style.display = "block";
+			loadingText.innerText = "Đang chạy mô hình YOLOv8s...";
+
+			try {
+				let fileBlob = null;
+				let filename = "";
+
+				if (currentRawFile) {
+					fileBlob = currentRawFile;
+					filename = currentRawFile.name;
+				} else if (currentSampleId) {
+					const sampleUrl = `/static/samples/sample_${currentSampleId}.png`;
+					const response = await fetch(sampleUrl);
+					if (!response.ok) throw new Error("Không thể tải ảnh mẫu từ server.");
+					fileBlob = await response.blob();
+					filename = `sample_${currentSampleId}.jpg`;
+				}
+
+				// Construct Form Data
+				const formData = new FormData();
+				formData.append("file", fileBlob, filename);
+
+				// Append parameters
+				const confVal = parseFloat(sliderConf.value);
+				const iouVal = parseFloat(sliderIou.value);
+
+				const fetchUrl = `/predict?conf=${confVal}&iou=${iouVal}`;
+
+				const response = await fetch(fetchUrl, {
+					method: "POST",
+					body: formData
+				});
+
+				if (!response.ok) {
+					const err = await response.json();
+					throw new Error(err.detail || "Không thể phân tích ảnh.");
+				}
+
+				serverResponseData = await response.json();
+
+				showToast("Nhận diện thành công!", "success");
+
+				// Save run to history
+				addRunToHistory(filename, serverResponseData);
+
+				// Transition layout
+				uploadState.style.display = "none";
+				resultsState.style.display = "flex";
+
+				// Load initial image into view
+				activeTab = "interactive";
+				switchTab(activeTab);
+
+			} catch (error) {
+				console.error(error);
+				showToast(error.message || "Lỗi khi giao tiếp với server.", "error");
+			} finally {
+				loadingOverlay.style.display = "none";
+				scannerLine.style.display = "none";
+			}
+		}
+
+		// ==========================================
+		// TABS AND DISPLAY CONTROLLER
+		// ==========================================
+
+		function switchTab(tabName) {
+			activeTab = tabName;
+
+			// Toggle active classes on tab buttons
+			document.querySelectorAll(".tab-btn").forEach(btn => {
+				if (btn.getAttribute("data-tab") === tabName) {
+					btn.classList.add("active");
+				} else {
+					btn.classList.remove("active");
+				}
+			});
+
+			if (!serverResponseData) return;
+
+			// Set images source
+			if (tabName === "interactive" || tabName === "raw") {
+				displayImage.src = serverResponseData.original_image_url;
+			} else if (tabName === "model") {
+				displayImage.src = serverResponseData.result_image_url;
+			}
+
+			// Once the image is loaded, re-draw the canvas layers
+			displayImage.onload = () => {
+				resizeCanvasOverlay();
+				updateUIWithResults();
+			};
+
+			// If image is already cached/loaded
+			if (displayImage.complete) {
+				resizeCanvasOverlay();
+				updateUIWithResults();
+			}
+		}
+
+		function resizeCanvasOverlay() {
+			// Resize canvas overlay to fit the styled dimensions of the image on the screen
+			canvasOverlay.width = displayImage.clientWidth;
+			canvasOverlay.height = displayImage.clientHeight;
+		}
+
+		// Listen for window resize to adjust responsive canvases
+		window.addEventListener("resize", () => {
+			if (resultsState.style.display === "flex") {
+				resizeCanvasOverlay();
+				drawInteractiveBoxes();
+			}
+		});
+
+		// Reset state to show upload zone
+		function resetUpload() {
+			currentRawFile = null;
+			currentSampleId = null;
+			serverResponseData = null;
+			fileInput.value = "";
+
+			resultsState.style.display = "none";
+			uploadState.style.display = "flex";
+		}
+
+		// ==========================================
+		// DYNAMIC FILTERING & UI RENDERING
+		// ==========================================
+
+		function getFilteredDetections() {
+			if (!serverResponseData) return [];
+
+			// Get selected classes from checkboxes
+			const activeClasses = Array.from(classFilters)
+				.filter(cb => cb.checked)
+				.map(cb => cb.getAttribute("data-class"));
+
+			return serverResponseData.detections.filter(d => activeClasses.includes(d.class_name));
+		}
+
+		function updateUIWithResults() {
+			const filteredDetections = getFilteredDetections();
+
+			// 1. Draw Boxes on canvas overlay
+			drawInteractiveBoxes(filteredDetections);
+
+			// 2. Render metric dashboard cards
+			renderMetricsCards(filteredDetections);
+
+			// 3. Render table of errors
+			renderDefectTable(filteredDetections);
+
+			// 4. Render charts
+			renderDefectCharts(filteredDetections);
+		}
+
+		// Draw bounding boxes on Canvas overlay
+		function drawInteractiveBoxes(detectionsInput) {
+			ctxOverlay.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
+
+			// Only draw boxes in "interactive" tab
+			if (activeTab !== "interactive") {
+				canvasOverlay.style.pointerEvents = "none"; // disable hover trigger on static views
+				return;
+			}
+
+			canvasOverlay.style.pointerEvents = "auto";
+
+			const detections = detectionsInput || getFilteredDetections();
+			if (detections.length === 0) return;
+
+			// Calculate scale ratios
+			const scaleX = canvasOverlay.width / displayImage.naturalWidth;
+			const scaleY = canvasOverlay.height / displayImage.naturalHeight;
+
+			detections.forEach((d, idx) => {
+				const x1 = d.bbox.x1 * scaleX;
+				const y1 = d.bbox.y1 * scaleY;
+				const x2 = d.bbox.x2 * scaleX;
+				const y2 = d.bbox.y2 * scaleY;
+				const width = x2 - x1;
+				const height = y2 - y1;
+
+				const style = classColorMap[d.class_name] || { border: "#f59e0b", fill: "rgba(245, 158, 11, 0.2)" };
+
+				// Draw bounding box rectangle
+				ctxOverlay.beginPath();
+				ctxOverlay.rect(x1, y1, width, height);
+
+				// Highlight box style if hovered in table
+				if (idx === activeHoverIndex) {
+					ctxOverlay.lineWidth = 4;
+					ctxOverlay.strokeStyle = "#ffffff";
+					ctxOverlay.fillStyle = "rgba(255, 255, 255, 0.15)";
+					ctxOverlay.stroke();
+					ctxOverlay.fill();
+
+					// Extra glowing frame
+					ctxOverlay.lineWidth = 1;
+					ctxOverlay.strokeStyle = style.border;
+					ctxOverlay.stroke();
+				} else {
+					ctxOverlay.lineWidth = 2;
+					ctxOverlay.strokeStyle = style.border;
+					ctxOverlay.fillStyle = style.fill;
+					ctxOverlay.stroke();
+					ctxOverlay.fill();
+				}
+
+				// Small text label above box
+				ctxOverlay.fillStyle = style.border;
+				ctxOverlay.font = "bold 10px " + getComputedStyle(document.body).fontFamily;
+
+				const labelText = `${d.class_name.toUpperCase()} ${(d.confidence * 100).toFixed(0)}%`;
+
+				// Draw badge background for class text
+				const textWidth = ctxOverlay.measureText(labelText).width;
+				ctxOverlay.fillStyle = style.border;
+				ctxOverlay.fillRect(x1 - 1, y1 - 14, textWidth + 6, 14);
+
+				// Text color
+				ctxOverlay.fillStyle = style.text || "#ffffff";
+				ctxOverlay.fillText(labelText, x1 + 2, y1 - 4);
+			});
+		}
+
+		// Render dashboard values
+		function renderMetricsCards(detections) {
+			const total = detections.length;
+			metricsTotalDefects.innerText = total;
+
+			// Compute verdict status based on FILTERED defects
+			// If total defects is 0, PASS
+			// If there's any crack or hole, or any defect has conf >= 0.5: NG - Serious Defect
+			// Else: NG - Minor Defect
+			let verdict = "PASS";
+			let subtext = "Chất lượng đạt chuẩn";
+			let cssClass = "pass";
+			let iconName = "shield-check";
+
+			if (total > 0) {
+				const seriousClasses = ["crack", "hole"];
+				const hasSerious = detections.some(d => seriousClasses.includes(d.class_name) || d.confidence >= 0.5);
+
+				if (hasSerious) {
+					verdict = "REJECT";
+					subtext = "Lỗi nghiêm trọng (Hole/Crack)";
+					cssClass = "ng-serious";
+					iconName = "shield-alert";
+				} else {
+					verdict = "WARNING";
+					subtext = "Khuyết tật nhỏ bề mặt";
+					cssClass = "ng-minor";
+					iconName = "alert-circle";
+				}
+			}
+
+			// Set Verdict style and contents
+			cardVerdict.className = `metric-card card-verdict ${cssClass}`;
+			verdictText.innerText = verdict;
+			verdictSubText.innerText = subtext;
+			verdictIcon.setAttribute("data-lucide", iconName);
+
+			// Compute speed values from model speed
+			if (serverResponseData.speed) {
+				const infSpeed = serverResponseData.speed.inference;
+				metricsSpeed.innerText = `${infSpeed} ms`;
+				metricsSpeedDetail.innerText = `Pre: ${serverResponseData.speed.preprocess}ms | Post: ${serverResponseData.speed.postprocess}ms`;
+			} else {
+				metricsSpeed.innerText = "N/A";
+				metricsSpeedDetail.innerText = "Không có thông số";
+			}
+
+			// Max confidence
+			if (total > 0) {
+				const highestConfItem = detections.reduce((max, item) => item.confidence > max.confidence ? item : max, detections[0]);
+				metricsMaxConf.innerText = `${(highestConfItem.confidence * 100).toFixed(1)}%`;
+				metricsMaxConfClass.innerText = `Loại lỗi: ${classVietnameseMap[highestConfItem.class_name] || highestConfItem.class_name}`;
+			} else {
+				metricsMaxConf.innerText = "0.0%";
+				metricsMaxConfClass.innerText = "Không có";
+			}
+
+			lucide.createIcons({ scope: cardVerdict });
+		}
+
+		// Render Table list of defects
+		function renderDefectTable(detections) {
+			defectTableBody.innerHTML = "";
+
+			if (detections.length === 0) {
+				noDefectsMessage.style.display = "block";
+				return;
+			}
+
+			noDefectsMessage.style.display = "none";
+
+			detections.forEach((d, index) => {
+				const row = document.createElement("tr");
+				row.className = "table-row-defect";
+
+				// Event triggers for highlights
+				row.addEventListener("mouseenter", () => {
+					activeHoverIndex = index;
+					row.classList.add("highlighted");
+					drawInteractiveBoxes(detections);
+				});
+
+				row.addEventListener("mouseleave", () => {
+					activeHoverIndex = null;
+					row.classList.remove("highlighted");
+					drawInteractiveBoxes(detections);
+				});
+
+				const confPercent = (d.confidence * 100).toFixed(1);
+
+				let confBadgeColor = "rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3);";
+				if (d.confidence < 0.4) {
+					confBadgeColor = "rgba(245, 158, 11, 0.15); color: var(--primary); border: 1px solid rgba(245, 158, 11, 0.3);";
+				} else if (d.confidence >= 0.7) {
+					confBadgeColor = "rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3);";
+				}
+
+				row.innerHTML = `
                     <td class="td-id">#${index + 1}</td>
                     <td class="td-class">
                         <span style="display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; background-color:${classColorMap[d.class_name]?.border || '#ffffff'}"></span>
@@ -2040,35 +2154,35 @@
                     <td class="td-bbox">[${d.bbox.x1.toFixed(0)}, ${d.bbox.y1.toFixed(0)}] - [${d.bbox.x2.toFixed(0)}, ${d.bbox.y2.toFixed(0)}]</td>
                 `;
 
-                defectTableBody.appendChild(row);
-            });
-        }
+				defectTableBody.appendChild(row);
+			});
+		}
 
-        // Render analytics counts chart
-        function renderDefectCharts(detections) {
-            chartList.innerHTML = "";
-            
-            // Total of all defects
-            const total = detections.length;
+		// Render analytics counts chart
+		function renderDefectCharts(detections) {
+			chartList.innerHTML = "";
 
-            // Count occurrences of each class
-            const counts = { "hole": 0, "bubble": 0, "crack": 0, "scratch": 0 };
-            detections.forEach(d => {
-                if (counts[d.class_name] !== undefined) {
-                    counts[d.class_name]++;
-                }
-            });
+			// Total of all defects
+			const total = detections.length;
 
-            // Display horizontal bars
-            Object.keys(counts).forEach(className => {
-                const count = counts[className];
-                const percentage = total > 0 ? (count / total) * 100 : 0;
-                
-                const style = classColorMap[className] || { border: "#f59e0b" };
-                
-                const row = document.createElement("div");
-                row.className = "chart-row";
-                row.innerHTML = `
+			// Count occurrences of each class
+			const counts = { "hole": 0, "bubble": 0, "crack": 0, "scratch": 0 };
+			detections.forEach(d => {
+				if (counts[d.class_name] !== undefined) {
+					counts[d.class_name]++;
+				}
+			});
+
+			// Display horizontal bars
+			Object.keys(counts).forEach(className => {
+				const count = counts[className];
+				const percentage = total > 0 ? (count / total) * 100 : 0;
+
+				const style = classColorMap[className] || { border: "#f59e0b" };
+
+				const row = document.createElement("div");
+				row.className = "chart-row";
+				row.innerHTML = `
                     <div class="chart-label-wrap">
                         <span class="chart-label-class">
                             <span class="chart-class-dot" style="background-color: ${style.border}"></span>
@@ -2081,73 +2195,73 @@
                     </div>
                 `;
 
-                chartList.appendChild(row);
+				chartList.appendChild(row);
 
-                // Simple timeout to trigger animated bar width slide
-                setTimeout(() => {
-                    const fill = row.querySelector(".chart-bar-fill");
-                    if (fill) fill.style.width = `${percentage}%`;
-                }, 50);
-            });
-        }
+				// Simple timeout to trigger animated bar width slide
+				setTimeout(() => {
+					const fill = row.querySelector(".chart-bar-fill");
+					if (fill) fill.style.width = `${percentage}%`;
+				}, 50);
+			});
+		}
 
-        // Interactive mouse hover details over canvas boxes
-        function handleCanvasMouseMove(e) {
-            if (!serverResponseData || activeTab !== "interactive") return;
+		// Interactive mouse hover details over canvas boxes
+		function handleCanvasMouseMove(e) {
+			if (!serverResponseData || activeTab !== "interactive") return;
 
-            const rect = canvasOverlay.getBoundingClientRect();
-            // Client mouse coords
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+			const rect = canvasOverlay.getBoundingClientRect();
+			// Client mouse coords
+			const mouseX = e.clientX - rect.left;
+			const mouseY = e.clientY - rect.top;
 
-            const filteredDetections = getFilteredDetections();
-            if (filteredDetections.length === 0) return;
+			const filteredDetections = getFilteredDetections();
+			if (filteredDetections.length === 0) return;
 
-            const scaleX = canvasOverlay.width / displayImage.naturalWidth;
-            const scaleY = canvasOverlay.height / displayImage.naturalHeight;
+			const scaleX = canvasOverlay.width / displayImage.naturalWidth;
+			const scaleY = canvasOverlay.height / displayImage.naturalHeight;
 
-            let hoveredIndex = null;
-            
-            // Find if mouse is within any bounding box (looping reverse to prioritize smaller or top boxes)
-            for (let i = filteredDetections.length - 1; i >= 0; i--) {
-                const d = filteredDetections[i];
-                const x1 = d.bbox.x1 * scaleX;
-                const y1 = d.bbox.y1 * scaleY;
-                const x2 = d.bbox.x2 * scaleX;
-                const y2 = d.bbox.y2 * scaleY;
+			let hoveredIndex = null;
 
-                if (mouseX >= x1 && mouseX <= x2 && mouseY >= y1 && mouseY <= y2) {
-                    hoveredIndex = i;
-                    break;
-                }
-            }
+			// Find if mouse is within any bounding box (looping reverse to prioritize smaller or top boxes)
+			for (let i = filteredDetections.length - 1; i >= 0; i--) {
+				const d = filteredDetections[i];
+				const x1 = d.bbox.x1 * scaleX;
+				const y1 = d.bbox.y1 * scaleY;
+				const x2 = d.bbox.x2 * scaleX;
+				const y2 = d.bbox.y2 * scaleY;
 
-            // Update state
-            if (hoveredIndex !== activeHoverIndex) {
-                activeHoverIndex = hoveredIndex;
-                drawInteractiveBoxes(filteredDetections);
-                
-                // Highlight corresponding row in table
-                document.querySelectorAll(".table-row-defect").forEach((row, index) => {
-                    if (index === hoveredIndex) {
-                        row.classList.add("highlighted");
-                        row.scrollIntoView({ behavior: "smooth", block: "nearest" });
-                    } else {
-                        row.classList.remove("highlighted");
-                    }
-                });
-            }
+				if (mouseX >= x1 && mouseX <= x2 && mouseY >= y1 && mouseY <= y2) {
+					hoveredIndex = i;
+					break;
+				}
+			}
 
-            // Display tooltip
-            if (hoveredIndex !== null) {
-                const d = filteredDetections[hoveredIndex];
-                
-                canvasTooltip.style.display = "block";
-                // Shift tooltip away from cursor slightly to avoid covering it
-                canvasTooltip.style.left = `${e.pageX + 15}px`;
-                canvasTooltip.style.top = `${e.pageY + 15}px`;
+			// Update state
+			if (hoveredIndex !== activeHoverIndex) {
+				activeHoverIndex = hoveredIndex;
+				drawInteractiveBoxes(filteredDetections);
 
-                canvasTooltip.innerHTML = `
+				// Highlight corresponding row in table
+				document.querySelectorAll(".table-row-defect").forEach((row, index) => {
+					if (index === hoveredIndex) {
+						row.classList.add("highlighted");
+						row.scrollIntoView({ behavior: "smooth", block: "nearest" });
+					} else {
+						row.classList.remove("highlighted");
+					}
+				});
+			}
+
+			// Display tooltip
+			if (hoveredIndex !== null) {
+				const d = filteredDetections[hoveredIndex];
+
+				canvasTooltip.style.display = "block";
+				// Shift tooltip away from cursor slightly to avoid covering it
+				canvasTooltip.style.left = `${e.pageX + 15}px`;
+				canvasTooltip.style.top = `${e.pageY + 15}px`;
+
+				canvasTooltip.innerHTML = `
                     <div class="tooltip-row">
                         <span class="tooltip-label">Khuyết tật:</span>
                         <span class="tooltip-value" style="color: ${classColorMap[d.class_name]?.border}">${classVietnameseMap[d.class_name]}</span>
@@ -2165,92 +2279,92 @@
                         <span class="tooltip-value">${d.bbox.y1.toFixed(0)} - ${d.bbox.y2.toFixed(0)}</span>
                     </div>
                 `;
-            } else {
-                canvasTooltip.style.display = "none";
-            }
-        }
+			} else {
+				canvasTooltip.style.display = "none";
+			}
+		}
 
-        function handleCanvasMouseLeave() {
-            if (activeHoverIndex !== null) {
-                activeHoverIndex = null;
-                drawInteractiveBoxes();
-                document.querySelectorAll(".table-row-defect").forEach(row => row.classList.remove("highlighted"));
-            }
-            canvasTooltip.style.display = "none";
-        }
+		function handleCanvasMouseLeave() {
+			if (activeHoverIndex !== null) {
+				activeHoverIndex = null;
+				drawInteractiveBoxes();
+				document.querySelectorAll(".table-row-defect").forEach(row => row.classList.remove("highlighted"));
+			}
+			canvasTooltip.style.display = "none";
+		}
 
-        // ==========================================
-        // HISTORY MANAGEMENT
-        // ==========================================
-        
-        function loadHistoryFromStorage() {
-            try {
-                const stored = localStorage.getItem("timberguard_history");
-                if (stored) {
-                    localHistory = JSON.parse(stored);
-                    renderHistoryList();
-                }
-            } catch (e) {
-                console.error("Lỗi khi đọc lịch sử:", e);
-            }
-        }
+		// ==========================================
+		// HISTORY MANAGEMENT
+		// ==========================================
 
-        function addRunToHistory(filename, data) {
-            const timestamp = new Date().toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString("vi-VN", { day: '2-digit', month: '2-digit' });
-            
-            // Generate simple thumbnail (model result or original image)
-            const historyItem = {
-                id: Date.now().toString(),
-                name: filename,
-                time: timestamp,
-                originalUrl: data.original_image_url,
-                resultUrl: data.result_image_url,
-                total: data.total_defects,
-                status: data.quality_status,
-                data: data // Save full response details
-            };
+		function loadHistoryFromStorage() {
+			try {
+				const stored = localStorage.getItem("timberguard_history");
+				if (stored) {
+					localHistory = JSON.parse(stored);
+					renderHistoryList();
+				}
+			} catch (e) {
+				console.error("Lỗi khi đọc lịch sử:", e);
+			}
+		}
 
-            // Limit history to 5 items to save space
-            localHistory.unshift(historyItem);
-            if (localHistory.length > 5) {
-                localHistory.pop();
-            }
+		function addRunToHistory(filename, data) {
+			const timestamp = new Date().toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString("vi-VN", { day: '2-digit', month: '2-digit' });
 
-            try {
-                localStorage.setItem("timberguard_history", JSON.stringify(localHistory));
-                renderHistoryList();
-            } catch (e) {
-                console.error("Lỗi khi ghi lịch sử:", e);
-            }
-        }
+			// Generate simple thumbnail (model result or original image)
+			const historyItem = {
+				id: Date.now().toString(),
+				name: filename,
+				time: timestamp,
+				originalUrl: data.original_image_url,
+				resultUrl: data.result_image_url,
+				total: data.total_defects,
+				status: data.quality_status,
+				data: data // Save full response details
+			};
 
-        function renderHistoryList() {
-            historyList.innerHTML = "";
-            
-            if (localHistory.length === 0) {
-                historyList.innerHTML = `<div style="font-size: 11px; color: var(--text-dark); text-align: center; padding: 12px;">Chưa có lịch sử phân tích.</div>`;
-                return;
-            }
+			// Limit history to 5 items to save space
+			localHistory.unshift(historyItem);
+			if (localHistory.length > 5) {
+				localHistory.pop();
+			}
 
-            localHistory.forEach(item => {
-                const div = document.createElement("div");
-                div.className = "history-item";
-                
-                div.addEventListener("click", () => {
-                    // Restore this detection run
-                    serverResponseData = item.data;
-                    
-                    // Restore visualizer
-                    uploadState.style.display = "none";
-                    resultsState.style.display = "flex";
-                    
-                    showToast(`Đã phục hồi phân tích: ${item.name}`, "success");
-                    switchTab("interactive");
-                });
+			try {
+				localStorage.setItem("timberguard_history", JSON.stringify(localHistory));
+				renderHistoryList();
+			} catch (e) {
+				console.error("Lỗi khi ghi lịch sử:", e);
+			}
+		}
 
-                const verdictBadgeClass = item.status === "PASS" ? "verdict-pass" : "verdict-ng";
+		function renderHistoryList() {
+			historyList.innerHTML = "";
 
-                div.innerHTML = `
+			if (localHistory.length === 0) {
+				historyList.innerHTML = `<div style="font-size: 11px; color: var(--text-dark); text-align: center; padding: 12px;">Chưa có lịch sử phân tích.</div>`;
+				return;
+			}
+
+			localHistory.forEach(item => {
+				const div = document.createElement("div");
+				div.className = "history-item";
+
+				div.addEventListener("click", () => {
+					// Restore this detection run
+					serverResponseData = item.data;
+
+					// Restore visualizer
+					uploadState.style.display = "none";
+					resultsState.style.display = "flex";
+
+					showToast(`Đã phục hồi phân tích: ${item.name}`, "success");
+					switchTab("interactive");
+				});
+
+				const verdictBadgeClass = item.status === "PASS" ? "verdict-pass" : "verdict-ng";
+
+				div.innerHTML = `
                     <div class="history-item-left">
                         <img class="history-thumbnail" src="${item.originalUrl}" alt="Thumb">
                         <div class="history-info">
@@ -2264,41 +2378,41 @@
                     </div>
                 `;
 
-                historyList.appendChild(div);
-            });
-        }
+				historyList.appendChild(div);
+			});
+		}
 
-        // ==========================================
-        // CUSTOM TOAST NOTIFICATIONS
-        // ==========================================
-        
-        function showToast(message, type = "success") {
-            const toast = document.createElement("div");
-            toast.className = `toast toast-${type}`;
-            
-            const icon = type === "success" ? "check-circle" : "alert-circle";
-            const iconClass = type === "success" ? "toast-icon-success" : "toast-icon-error";
+		// ==========================================
+		// CUSTOM TOAST NOTIFICATIONS
+		// ==========================================
 
-            toast.innerHTML = `
+		function showToast(message, type = "success") {
+			const toast = document.createElement("div");
+			toast.className = `toast toast-${type}`;
+
+			const icon = type === "success" ? "check-circle" : "alert-circle";
+			const iconClass = type === "success" ? "toast-icon-success" : "toast-icon-error";
+
+			toast.innerHTML = `
                 <div class="toast-icon ${iconClass}">
                     <i data-lucide="${icon}" style="width: 18px; height: 18px;"></i>
                 </div>
                 <div>${message}</div>
             `;
 
-            document.getElementById("toastContainer").appendChild(toast);
-            lucide.createIcons({ scope: toast });
+			document.getElementById("toastContainer").appendChild(toast);
+			lucide.createIcons({ scope: toast });
 
-            // Trigger animation slide in
-            setTimeout(() => toast.classList.add("show"), 10);
+			// Trigger animation slide in
+			setTimeout(() => toast.classList.add("show"), 10);
 
-            // Slide out and remove after 4 seconds
-            setTimeout(() => {
-                toast.classList.remove("show");
-                setTimeout(() => toast.remove(), 300);
-            }, 4000);
-        }
-    </script>
+			// Slide out and remove after 4 seconds
+			setTimeout(() => {
+				toast.classList.remove("show");
+				setTimeout(() => toast.remove(), 300);
+			}, 4000);
+		}
+	</script>
 </body>
 
 </html>
