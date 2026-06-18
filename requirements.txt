@@ -1,0 +1,15 @@
+# Deep Learning & Object Detection
+torch>=2.4.1
+torchvision>=0.19.1
+ultralytics>=8.3.6
+
+# Web API Framework
+fastapi>=0.111.0
+uvicorn>=0.30.1
+python-multipart>=0.0.9
+
+# Data Science & Computer Vision
+numpy>=1.26.0
+opencv-python>=4.9.0.0
+matplotlib>=3.9.0
+PyYAML>=6.0.1

@@ -111,272 +111,11 @@ def check_file_extension(filename: str):
 
 @app.get("/", response_class=HTMLResponse)
 def home():
-    return """
-    <!DOCTYPE html>
-    <html lang="vi">
-    <head>
-        <meta charset="UTF-8">
-        <title>Wood Defect Detection</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                background: #f4f6f8;
-                margin: 0;
-                padding: 0;
-            }
-
-            .container {
-                width: 90%;
-                max-width: 1100px;
-                margin: 30px auto;
-                background: white;
-                padding: 25px;
-                border-radius: 14px;
-                box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-            }
-
-            h1 {
-                text-align: center;
-                color: #6b3f1d;
-                margin-bottom: 10px;
-            }
-
-            .subtitle {
-                text-align: center;
-                color: #666;
-                margin-bottom: 25px;
-            }
-
-            .upload-box {
-                border: 2px dashed #b88752;
-                padding: 25px;
-                text-align: center;
-                border-radius: 12px;
-                background: #fffaf4;
-            }
-
-            input[type="file"] {
-                margin: 15px 0;
-            }
-
-            button {
-                padding: 12px 24px;
-                background: #8b5a2b;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 16px;
-            }
-
-            button:hover {
-                background: #6f431f;
-            }
-
-            .result {
-                margin-top: 30px;
-                display: none;
-            }
-
-            .status {
-                font-size: 22px;
-                font-weight: bold;
-                text-align: center;
-                margin-bottom: 20px;
-                padding: 12px;
-                border-radius: 8px;
-            }
-
-            .pass {
-                background: #e7f8ec;
-                color: #147a31;
-            }
-
-            .ng {
-                background: #fdeaea;
-                color: #b00020;
-            }
-
-            .images {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 20px;
-                margin-top: 20px;
-            }
-
-            .image-card {
-                text-align: center;
-            }
-
-            .image-card img {
-                max-width: 100%;
-                border-radius: 10px;
-                border: 1px solid #ddd;
-            }
-
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 25px;
-            }
-
-            th, td {
-                border: 1px solid #ddd;
-                padding: 10px;
-                text-align: center;
-            }
-
-            th {
-                background: #8b5a2b;
-                color: white;
-            }
-
-            .loading {
-                display: none;
-                text-align: center;
-                margin-top: 20px;
-                color: #8b5a2b;
-                font-weight: bold;
-            }
-
-            @media (max-width: 768px) {
-                .images {
-                    grid-template-columns: 1fr;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Wood Surface Defect Detection</h1>
-            <div class="subtitle">Nhận diện lỗi bề mặt gỗ bằng mô hình YOLOv8</div>
-
-            <div class="upload-box">
-                <h3>Chọn ảnh bề mặt gỗ cần kiểm tra</h3>
-                <input type="file" id="fileInput" accept="image/*">
-                <br>
-                <button onclick="predict()">Nhận diện lỗi</button>
-            </div>
-
-            <div class="loading" id="loading">
-                Đang xử lý ảnh, vui lòng chờ...
-            </div>
-
-            <div class="result" id="resultBox">
-                <div id="qualityStatus" class="status"></div>
-
-                <p><b>Tổng số lỗi phát hiện:</b> <span id="totalDefects"></span></p>
-
-                <div class="images">
-                    <div class="image-card">
-                        <h3>Ảnh gốc</h3>
-                        <img id="originalImage" src="">
-                    </div>
-
-                    <div class="image-card">
-                        <h3>Ảnh sau khi nhận diện</h3>
-                        <img id="resultImage" src="">
-                    </div>
-                </div>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th>STT</th>
-                            <th>Loại lỗi</th>
-                            <th>Độ tin cậy</th>
-                            <th>x1</th>
-                            <th>y1</th>
-                            <th>x2</th>
-                            <th>y2</th>
-                        </tr>
-                    </thead>
-                    <tbody id="detectionTable"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <script>
-            async function predict() {
-                const fileInput = document.getElementById("fileInput");
-                const file = fileInput.files[0];
-
-                if (!file) {
-                    alert("Vui lòng chọn một ảnh trước.");
-                    return;
-                }
-
-                const formData = new FormData();
-                formData.append("file", file);
-
-                document.getElementById("loading").style.display = "block";
-                document.getElementById("resultBox").style.display = "none";
-
-                try {
-                    const response = await fetch("/predict", {
-                        method: "POST",
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        const error = await response.json();
-                        alert(error.detail || "Có lỗi xảy ra.");
-                        return;
-                    }
-
-                    const data = await response.json();
-
-                    document.getElementById("loading").style.display = "none";
-                    document.getElementById("resultBox").style.display = "block";
-
-                    document.getElementById("originalImage").src = data.original_image_url;
-                    document.getElementById("resultImage").src = data.result_image_url;
-                    document.getElementById("totalDefects").innerText = data.total_defects;
-
-                    const statusDiv = document.getElementById("qualityStatus");
-                    statusDiv.innerText = data.quality_status;
-
-                    if (data.quality_status === "PASS") {
-                        statusDiv.className = "status pass";
-                    } else {
-                        statusDiv.className = "status ng";
-                    }
-
-                    const table = document.getElementById("detectionTable");
-                    table.innerHTML = "";
-
-                    if (data.detections.length === 0) {
-                        table.innerHTML = `
-                            <tr>
-                                <td colspan="7">Không phát hiện lỗi</td>
-                            </tr>
-                        `;
-                    } else {
-                        data.detections.forEach((det, index) => {
-                            table.innerHTML += `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td>${det.class_name}</td>
-                                    <td>${det.confidence}</td>
-                                    <td>${det.bbox.x1}</td>
-                                    <td>${det.bbox.y1}</td>
-                                    <td>${det.bbox.x2}</td>
-                                    <td>${det.bbox.y2}</td>
-                                </tr>
-                            `;
-                        });
-                    }
-
-                } catch (error) {
-                    document.getElementById("loading").style.display = "none";
-                    alert("Lỗi kết nối server.");
-                    console.error(error);
-                }
-            }
-        </script>
-    </body>
-    </html>
-    """
+    html_path = BASE_DIR / "index.html"
+    if html_path.exists():
+        with open(html_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse(content="<h1>index.html not found</h1>", status_code=404)
 
 
 # =========================
@@ -397,11 +136,15 @@ def health_check():
 # =========================
 
 @app.post("/predict")
-async def predict(file: Annotated[UploadFile, File(...)]):
+async def predict(
+    file: Annotated[UploadFile, File(...)],
+    conf: float = 0.25,
+    iou: float = 0.45
+):
     if not check_file_extension(file.filename):
         raise HTTPException(
             status_code=400,
-            detail="File không hợp lệ. Chỉ hỗ trợ jpg, jpeg, png, bmp, webp."
+            detail="File không hợp lệ. Chỉ hỗ trợ ảnh dạng: " + ", ".join(ALLOWED_EXTENSIONS)
         )
 
     ext = file.filename.rsplit(".", 1)[-1].lower()
@@ -415,7 +158,8 @@ async def predict(file: Annotated[UploadFile, File(...)]):
         results = model.predict(
             source=str(image_path),
             imgsz=IMG_SIZE,
-            conf=CONF_THRESHOLD,
+            conf=conf,
+            iou=iou,
             save=False,
             verbose=False
         )
@@ -426,8 +170,19 @@ async def predict(file: Annotated[UploadFile, File(...)]):
         )
 
     detections = []
+    speed_metrics = {
+        "preprocess": 0.0,
+        "inference": 0.0,
+        "postprocess": 0.0
+    }
 
-    for result in results:
+    if len(results) > 0:
+        result = results[0]
+        speed_metrics = {
+            "preprocess": round(result.speed.get("preprocess", 0.0), 2),
+            "inference": round(result.speed.get("inference", 0.0), 2),
+            "postprocess": round(result.speed.get("postprocess", 0.0), 2)
+        }
         for box in result.boxes:
             cls_id = int(box.cls[0])
             confidence = float(box.conf[0])
@@ -466,5 +221,6 @@ async def predict(file: Annotated[UploadFile, File(...)]):
         "quality_status": quality_status,
         "original_image_url": f"/uploads/{filename}",
         "result_image_url": f"/static/results/{result_filename}",
-        "detections": detections
+        "detections": detections,
+        "speed": speed_metrics
     }
